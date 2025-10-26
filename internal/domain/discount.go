@@ -6,36 +6,58 @@ import (
 	"os"
 
 	"github.com/ianlopshire/go-fixedwidth"
+	"github.com/lavinas/cadoc6334/internal/port"
 )
 
-var (
-	sqlDiscount string = "insert into cadoc_6334_desconto(Ano, Trimestre, Funcao, Bandeira, FormaCaptura, NumeroParcelas, CodigoSegmento, TaxaDescontoMedia, TaxaDescontoMinima, TaxaDescontoMaxima, DesvioPadraoTaxaDesconto, ValorTransacoes, QuantidadeTransacoes) values (%d, %d,'%s', %d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %d);"
-)
-
+// Discount SQL insert statement
 type Discount struct {
-	Year         int32  `fixed:"1,4"`
-	Quarter      int32  `fixed:"5,5"`
-	Function     string `fixed:"6,6"`
-	Brand        int32  `fixed:"7,8"`
-	Capture      int32  `fixed:"9,9"`
-	Installments int32  `fixed:"10,11"`
-	Segment      int32  `fixed:"12,14"`
-	AvgFee       float32
+	Year         int32  `fixed:"1,4" gorm:"column:ano"`
+	Quarter      int32  `fixed:"5,5" gorm:"column:trimestre"`
+	Function     string `fixed:"6,6" gorm:"column:funcao"`
+	Brand        int32  `fixed:"7,8" gorm:"column:bandeira"`
+	Capture      int32  `fixed:"9,9" gorm:"column:forma_captura"`
+	Installments int32  `fixed:"10,11" gorm:"column:numero_parcelas"`
+	Segment      int32  `fixed:"12,14" gorm:"column:codigo_segmento"`
+	AvgFee       float32 `gorm:"column:taxa_desconto_media"`
 	AvgFeeInt    int32 `fixed:"15,18"`
-	MinFee       float32
+	MinFee       float32 `gorm:"column:taxa_desconto_minima"`
 	MinFeeInt    int32 `fixed:"19,22"`
-	MaxFee       float32
+	MaxFee       float32 `gorm:"column:taxa_desconto_maxima"`
 	MaxFeeInt    int32 `fixed:"23,26"`
-	StdDevFee    float32
+	StdDevFee    float32 `gorm:"column:desvio_padrao_taxa_desconto"`
 	StdDevFeeInt int32 `fixed:"27,30"`
-	Value        float32
+	Value        float32 `gorm:"column:valor_transacoes"`
 	ValueInt     int32 `fixed:"31,45"`
-	Qtty         int32 `fixed:"46,57"`
+	Qtty         int32 `fixed:"46,57" gorm:"column:quantidade_transacoes"`
 }
 
-// GetInsert returns the SQL insert statement for the ranking
-func (r *Discount) GetInsert() string {
-	return fmt.Sprintf(sqlDiscount, r.Year, r.Quarter, r.Function, r.Brand, r.Capture, r.Installments, r.Segment, r.AvgFee, r.MinFee, r.MaxFee, r.StdDevFee, r.Value, r.Qtty)
+// NewDiscount creates a new Discount instance
+func NewDiscount() *Discount {
+	return &Discount{}
+}
+
+// TableName returns the table name for the Discount struct
+func (d *Discount) TableName() string {
+	return "cadoc_6334_desconto"
+}
+
+// GetKey generates a unique key for the Discount record.
+func (d *Discount) GetKey() string {
+	return fmt.Sprintf("%d|%d|%s|%d|%d|%d|%d", d.Year, d.Quarter, d.Function, d.Brand, d.Capture, d.Installments, d.Segment)
+}
+
+// FindAll retrieves all Discount records.
+func (d *Discount) FindAll(repo port.Repository) (map[string]port.Report, error) {
+	var records []*Discount
+	err := repo.FindAll(&records)
+	if err != nil {
+		return nil, err
+	}
+	ret := make(map[string]port.Report)
+	for _, r := range records {
+		ret[r.GetKey()] = r
+	}
+	return ret, nil
 }
 
 // ParseLine parses a line of text into a Discount struct
@@ -60,7 +82,7 @@ func (r *Discount) String() string {
 }
 
 // GetDiscount returns the discount for a given year, quarter, value, and fee
-func GetDiscount(year int32, quarter int32, value float32, fee float32) []*Discount {
+func (r *Discount) GetDiscount(year int32, quarter int32, value float32, fee float32) []*Discount {
 	ret := []*Discount{}
 	totValue := float32(0)
 	for si, sv := range segValues {
@@ -114,49 +136,19 @@ func GetDiscount(year int32, quarter int32, value float32, fee float32) []*Disco
 }
 
 // LoadDiscount loads the discount data
-func LoadDiscount() []*Discount {
+func (r *Discount) LoadDiscount() []*Discount {
 	ret := []*Discount{}
 	for _, y := range years {
 		for _, q := range quarters {
-			disc := GetDiscount(y, q, discTotalValue, discAvgFee)
+			disc := r.GetDiscount(y, q, discTotalValue, discAvgFee)
 			ret = append(ret, disc...)
 		}
 	}
 	return ret
 }
 
-// PrintDiscount prints the discount data
-func PrintDiscount() {
-	value := float32(0)
-	qty := int32(0)
-	avgfee := float32(0)
-	minfee := float32(0)
-	maxfee := float32(0)
-	stddev := float32(0)
-	count := int32(0)
-	disc := LoadDiscount()
-	for _, d := range disc {
-		fmt.Println(d.GetInsert())
-		value += d.Value
-		qty += d.Qtty
-		avgfee += d.AvgFee
-		minfee += d.MinFee
-		maxfee += d.MaxFee
-		stddev += d.StdDevFee
-		count++
-	}
-	fmt.Println("--------------------------------------")
-	fmt.Printf("-- total value: %.2f, expected %.2f\n", value, discTotalValue)
-	fmt.Printf("-- total quantity: %d\n", qty)
-	fmt.Printf("-- avg fee: %.2f, expected %.2f\n", avgfee/float32(count), discAvgFee)
-	fmt.Printf("-- min fee: %.2f\n", minfee/float32(count))
-	fmt.Printf("-- max fee: %.2f\n", maxfee/float32(count))
-	fmt.Printf("-- stddev fee: %.2f\n", stddev/float32(count))
-	fmt.Printf("-- total records: %d\n", count)
-}
-
 // ParseDiscountFile parses a discount file and returns a slice of Discount structs
-func ParseDiscountFile(filePath string) ([]*Discount, error) {
+func (r *Discount) ParseDiscountFile(filePath string) ([]*Discount, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -195,38 +187,28 @@ func ParseDiscountFile(filePath string) ([]*Discount, error) {
 	return discounts, nil
 }
 
-// ReconciliateDiscount reconciliates the discount data from the file with the generated data
-func ReconciliateDiscount(filePath string) {
-	fmt.Println("Starting discount reconciliation...")
-	genDiscounts := LoadDiscount()
-	fileDiscounts, err := ParseDiscountFile(filePath)
+// GetLoaded retrieves and maps Discount records from mounted data.
+func (r *Discount) GetLoaded() (map[string]port.Report, error) {
+	loadedDiscount := r.LoadDiscount()
+	if loadedDiscount == nil {
+		return nil, fmt.Errorf("no discount data loaded")
+	}
+	discountMap := make(map[string]port.Report)
+	for _, d := range loadedDiscount {
+		discountMap[d.GetKey()] = d
+	}
+	return discountMap, nil
+}
+
+// GetParsedFile retrieves and maps Discount records from a file.
+func (r *Discount) GetParsedFile(filePath string) (map[string]port.Report, error) {
+	fileDiscounts, err := r.ParseDiscountFile(filePath)
 	if err != nil {
-		fmt.Println("Error parsing discount file:", err)
-		return
+		return nil, err
 	}
-	if len(genDiscounts) != len(fileDiscounts) {
-		fmt.Printf("Line count mismatch: generated %d, file %d\n", len(genDiscounts), len(fileDiscounts))
-		return
-	}
-	map1 := make(map[string]*Discount)
-	map2 := make(map[string]*Discount)
-	for _, d := range genDiscounts {
-		key := fmt.Sprintf("%d|%d|%s|%d|%d|%d|%d", d.Year, d.Quarter, d.Function, d.Brand, d.Capture, d.Installments, d.Segment)
-		map1[key] = d
-	}
+	discountMap := make(map[string]port.Report)
 	for _, d := range fileDiscounts {
-		key := fmt.Sprintf("%d|%d|%s|%d|%d|%d|%d", d.Year, d.Quarter, d.Function, d.Brand, d.Capture, d.Installments, d.Segment)
-		map2[key] = d
+		discountMap[d.GetKey()] = d
 	}
-	for k, v1 := range map1 {
-		v2, ok := map2[k]
-		if !ok {
-			fmt.Printf("Missing in file: %s\n", k)
-			continue
-		}
-		if v1.String() != v2.String() {
-			fmt.Printf("Mismatch for %s:\nGenerated: %s\nFile:      %s\n", k, v1.String(), v2.String())
-		}
-	}
-	fmt.Println("Reconciliation complete.")
+	return discountMap, nil
 }

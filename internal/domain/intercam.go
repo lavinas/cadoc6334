@@ -6,12 +6,10 @@ import (
 	"os"
 
 	"github.com/ianlopshire/go-fixedwidth"
+	"github.com/lavinas/cadoc6334/internal/port"
 )
 
-var (
-	intercamSQL = "INSERT INTO intercam (Ano, Trimestre, Produto, ModalidadeCartao, Funcao, Bandeira, FormaCaptura, NumeroParcelas, CodigoSegmento, TarifaIntercambio, ValorTransacoes, QuantidadeTransacoes) VALUES (%d, %d, %d, '%s', '%s', %d, %d, %d, %d, %.2f, %.2f, %d);"
-)
-
+// Intercam represents the intercam data model
 type Intercam struct {
 	Year         int32  `fixed:"1,4"`
 	Quarter      int32  `fixed:"5,5"`
@@ -29,9 +27,33 @@ type Intercam struct {
 	Qtty         int32 `fixed:"37,48"`
 }
 
-// GetInsert returns the SQL insert statement for the Intercam struct
-func (i *Intercam) GetInsert() string {
-	return fmt.Sprintf(intercamSQL, i.Year, i.Quarter, i.Product, i.CardType, i.Function, i.Brand, i.Capture, i.Installments, i.Segment, i.Fee, i.Value, i.Qtty)
+// NewIntercam creates a new Intercam instance
+func NewIntercam() *Intercam {
+	return &Intercam{}
+}
+
+// TableName returns the table name for the Intercam struct
+func (i *Intercam) TableName() string {
+	return "cadoc_6334_intercam"
+}
+
+// GetKey generates a unique key for the Intercam record.
+func (i *Intercam) GetKey() string {
+	return fmt.Sprintf("%d|%d|%d|%s|%s|%d|%d|%d|%d", i.Year, i.Quarter, i.Product, i.CardType, i.Function, i.Brand, i.Capture, i.Installments, i.Segment)
+}
+
+// FindAll retrieves all Intercam records.
+func (i *Intercam) FindAll(repo port.Repository) (map[string]port.Report, error) {
+	var records []*Intercam
+	err := repo.FindAll(&records)
+	if err != nil {
+		return nil, err
+	}
+	ret := make(map[string]port.Report)
+	for _, r := range records {
+		ret[r.GetKey()] = r
+	}
+	return ret, nil
 }
 
 // Parse parses a line of text into an Intercam struct
@@ -53,7 +75,7 @@ func (i *Intercam) String() string {
 }
 
 // GetIntercam returns the Intercam struct from the SQL insert statement
-func GetIntercam(year int32, quarter int32, value float32, fee float32) []*Intercam {
+func (i *Intercam) GetIntercam(year int32, quarter int32, value float32, fee float32) []*Intercam {
 	ret := []*Intercam{}
 	totValue := float32(0)
 	for si, sv := range segValues {
@@ -110,31 +132,19 @@ func GetIntercam(year int32, quarter int32, value float32, fee float32) []*Inter
 }
 
 // LoadIntercam loads the intercam data
-func LoadIntercam() []*Intercam {
+func (i *Intercam) LoadIntercam() []*Intercam {
 	ret := []*Intercam{}
 	for _, y := range years {
 		for _, q := range quarters {
-			intercam := GetIntercam(y, q, intercamTotalValue, intercamAvgFee)
+			intercam := i.GetIntercam(y, q, intercamTotalValue, intercamAvgFee)
 			ret = append(ret, intercam...)
 		}
 	}
 	return ret
 }
 
-// PrintIntercam
-func PrintIntercam() {
-	tot := float32(0)
-	intercam := LoadIntercam()
-	for _, i := range intercam {
-		fmt.Println(i.GetInsert())
-		tot += i.Value
-	}
-	fmt.Println("---------------------------------------")
-	fmt.Printf("Value: %.2f, expected: %.2f\n", tot, intercamTotalValue)
-}
-
 // ParseIntercamFile parses the intercam file and returns a slice of Intercam structs
-func ParseIntercamFile(filename string) ([]*Intercam, error) {
+func (i *Intercam) ParseIntercamFile(filename string) ([]*Intercam, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -174,37 +184,30 @@ func ParseIntercamFile(filename string) ([]*Intercam, error) {
 	return intercams, nil
 }
 
-// ReconcileIntercam reconciles the intercam data
-func ReconciliateIntercam(filePath string) {
-	fmt.Println("Starting intercam reconciliation...")
-	genIntercan := LoadIntercam()
-	fileIntercan, err := ParseIntercamFile(filePath)
-	if err != nil {
-		fmt.Println("Error parsing discount file:", err)
-		return
+// GetLoaded retrieves and maps Intercam records from mounted data.
+func (i *Intercam) GetLoaded() (map[string]port.Report, error) {
+	loadedIntercam := i.LoadIntercam()
+	if loadedIntercam == nil {
+		return nil, fmt.Errorf("no intercam data loaded")
 	}
-	if len(genIntercan) != len(fileIntercan) {
-		fmt.Printf("Record count mismatch: generated %d, file %d\n", len(genIntercan), len(fileIntercan))
+	mapIntercam := make(map[string]port.Report)
+	for _, ic := range loadedIntercam {
+		mapIntercam[ic.GetKey()] = ic
 	}
-	map1 := make(map[string]*Intercam)
-	map2 := make(map[string]*Intercam)
-	for _, i := range genIntercan {
-		key := fmt.Sprintf("%d|%d|%d|%s|%s|%d|%d|%d|%d", i.Year, i.Quarter, i.Product, i.CardType, i.Function, i.Brand, i.Capture, i.Installments, i.Segment)
-		map1[key] = i
-	}
-	for _, i := range fileIntercan {
-		key := fmt.Sprintf("%d|%d|%d|%s|%s|%d|%d|%d|%d", i.Year, i.Quarter, i.Product, i.CardType, i.Function, i.Brand, i.Capture, i.Installments, i.Segment)
-		map2[key] = i
-	}
-	for k, v1 := range map1 {
-		v2, ok := map2[k]
-		if !ok {
-			fmt.Printf("Missing in file: %s\n", k)
-			continue
-		}
-		if v1.String() != v2.String() {
-			fmt.Printf("Record mismatch for key %s:\nGenerated: %s\nFile:      %s\n", k, v1.String(), v2.String())
-		}
-	}
-	fmt.Println("Intercam data reconciled successfully")
+	return mapIntercam, nil
 }
+
+
+// GetParsedFile retrieves and maps Intercam records from a file.
+func (i *Intercam) GetParsedFile(filename string) (map[string]port.Report, error) {
+	fileIntercam, err := i.ParseIntercamFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	mapIntercam := make(map[string]port.Report)
+	for _, ic := range fileIntercam {
+		mapIntercam[ic.GetKey()] = ic
+	}
+	return mapIntercam, nil
+}
+

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/ianlopshire/go-fixedwidth"
+	"github.com/lavinas/cadoc6334/internal/port"
 )
 
 // Segment represents a segment of a path.
@@ -14,6 +15,35 @@ type Segment struct {
 	Description string `fixed:"51,300"`
 	Code        int32  
 	CodeStr	    string `fixed:"301,303"`
+}
+
+// NewSegment creates a new Segment instance
+func NewSegment() *Segment {
+	return &Segment{}
+}
+
+// TableName returns the table name for the Segment struct
+func (s *Segment) TableName() string {
+	return "cadoc_6334_segmento"
+}
+
+// GetKey generates a unique key for the Segment record.
+func (s *Segment) GetKey() string {
+	return fmt.Sprintf("%03d", s.Code)
+}
+
+// FindAll retrieves all Segment records.
+func (s *Segment) FindAll(repo port.Repository) (map[string]port.Report, error) {
+	var records []*Segment
+	err := repo.FindAll(&records)
+	if err != nil {
+		return nil, err
+	}
+	ret := make(map[string]port.Report)
+	for _, r := range records {
+		ret[r.GetKey()] = r
+	}
+	return ret, nil
 }
 
 // Parse parses a fixed-width string into a Segment struct
@@ -38,7 +68,7 @@ func (s *Segment) String() string {
 }
 
 // LoadSegments loads segments from fixed string
-func LoadSegments() ([]*Segment, error) {
+func (s *Segment) LoadSegments() ([]*Segment, error) {
 	ret := []*Segment{}
 	ret = append(ret, &Segment{
 		Name:        "Cuidados pessoais",
@@ -164,7 +194,7 @@ func LoadSegments() ([]*Segment, error) {
 }
 
 // ParseSegmentFile parses a file of segments into a slice of Segment structs
-func ParseSegmentFile(filename string) ([]*Segment, error) {
+func (s *Segment) ParseSegmentFile(filename string) ([]*Segment, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -203,39 +233,32 @@ func ParseSegmentFile(filename string) ([]*Segment, error) {
 	return segments, nil
 }
 
-// ReconciliateSegments reconciles two slices of Segment structs and returns the differences
-func ReconciliateSegments(filename string) {
-	// load segments from fixed string
-	fixedSegments, err := LoadSegments()
+// GetLoaded retrieves and maps Segment records from mounted data.
+func (s *Segment) GetLoaded() (map[string]port.Report, error) {
+	loadedSegments, err := s.LoadSegments()
 	if err != nil {
-		fmt.Printf("Error loading fixed segments: %v\n", err)
-		return
+		return nil, err
 	}
-	// parse segments from file
-	parsedSegments, err := ParseSegmentFile(filename)
-	if err != nil {
-		fmt.Printf("Error parsing segment file: %v\n", err)
-		return
+	if loadedSegments == nil {
+		return nil, fmt.Errorf("no segment data loaded")
 	}
-	if len(fixedSegments) != len(parsedSegments) {
-		fmt.Printf("Segment count mismatch: fixed=%d, parsed=%d\n", len(fixedSegments), len(parsedSegments))
-		return
+	mapSegments := make(map[string]port.Report)
+	for _, seg := range loadedSegments {
+		mapSegments[seg.GetKey()] = seg
 	}
-	map1 := map[int32]*Segment{}
-	map2 := map[int32]*Segment{}
-	for _, s := range fixedSegments {
-		map1[s.Code] = s
-	}
-	for _, s := range parsedSegments {
-		map2[s.Code] = s
-	}
-	for code, seg1 := range map1 {
-		seg2, ok := map2[code]
-		if !ok {
-			continue
-		}
-		if seg1.String() != seg2.String() {
-			fmt.Printf("Segment code %d mismatch:\n  fixed:  %s\n  parsed: %s\n", code, seg1.String(), seg2.String())
-		}
-	}
+	return mapSegments, nil
 }
+
+// GetParsedFile retrieves and maps Segment records from a file.
+func (s *Segment) GetParsedFile(filename string) (map[string]port.Report, error) {
+	fileSegments, err := s.ParseSegmentFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	segmentMap := make(map[string]port.Report)
+	for _, seg := range fileSegments {
+		segmentMap[seg.GetKey()] = seg
+	}
+	return segmentMap, nil
+}
+

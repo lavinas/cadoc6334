@@ -6,29 +6,53 @@ import (
 	"os"
 
 	"github.com/ianlopshire/go-fixedwidth"
+	"github.com/lavinas/cadoc6334/internal/port"
 )
 
-var sqlConcred string = "insert into cadoc_6334_conccred(Ano, Trimestre, Bandeira, Funcao, QuantidadeEstabelecimentosCredenciados, QuantidadeEstabelecimentosAtivos, ValorTransacoes, QuantidadeTransacoes) values (%d, %d, %d, '%s', %d, %d, %.2f, %d);"
-
-type Concred struct {
-	Year                       int32  `fixed:"1,4"`
-	Quarter                    int32  `fixed:"5,5"`
-	Brand                      int32  `fixed:"6,7"`
-	Function                   string `fixed:"8,8"`
-	CredentialedEstablishments int32  `fixed:"9,17"`
-	ActiveEstablishments       int32  `fixed:"18,26"`
-	TransactionValue           float32
+// Conccred represents the Conccred data model.
+type Conccred struct {
+	Year                       int32  `fixed:"1,4" gorm:"column:ano"`
+	Quarter                    int32  `fixed:"5,5" gorm:"column:trimestre"`
+	Brand                      int32  `fixed:"6,7" gorm:"column:bandeira"`
+	Function                   string `fixed:"8,8" gorm:"column:funcao"`
+	CredentialedEstablishments int32  `fixed:"9,17" gorm:"column:quantidade_estabelecimentos_credenciados"`
+	ActiveEstablishments       int32  `fixed:"18,26" gorm:"column:quantidade_estabelecimentos_ativos"`
+	TransactionValue           float32 `gorm:"column:valor_transacoes"`
 	TransactionValueInt        int64 `fixed:"27,41"`
-	TransactionQuantity        int32 `fixed:"42,53"`
+	TransactionQuantity        int32 `fixed:"42,53" gorm:"column:quantidade_transacoes"`
 }
 
-// GetInsert generates the SQL insert statement for the Concred struct.
-func (c *Concred) GetInsert() string {
-	return fmt.Sprintf(sqlConcred, c.Year, c.Quarter, c.Brand, c.Function, c.CredentialedEstablishments, c.ActiveEstablishments, c.TransactionValue, c.TransactionQuantity)
+// TableName returns the table name for the Conccred struct.
+func (c *Conccred) TableName() string {
+	return "cadoc_6334_conccred"
 }
 
-// Parse parses a line of text into a Concred struct.
-func (c *Concred) Parse(line string) (*Concred, error) {
+// NewConccred creates a new Conccred instance.
+func NewConccred() *Conccred {
+	return &Conccred{}
+}
+
+// GetKey generates a unique key for the Conccred record.
+func (c *Conccred) GetKey() string {
+	return fmt.Sprintf("%d-%d-%d-%s", c.Year, c.Quarter, c.Brand, c.Function)
+}
+
+// FindAll retrieves all Conccred records.
+func (c *Conccred) FindAll(repo port.Repository) (map[string]port.Report, error) {
+	var records []*Conccred
+	err := repo.FindAll(&records)
+	if err != nil {
+		return nil, err
+	}
+	ret := make(map[string]port.Report)
+	for _, r := range records {
+		ret[r.GetKey()] = r
+	}
+	return ret, nil
+}
+
+// Parse parses a line of text into a Conccred struct.
+func (c *Conccred) Parse(line string) (*Conccred, error) {
 	err := fixedwidth.Unmarshal([]byte(line), c)
 	if err != nil {
 		return nil, err
@@ -38,15 +62,15 @@ func (c *Concred) Parse(line string) (*Concred, error) {
 	return c, nil
 }
 
-// String returns a string representation of the Concred struct.
-func (c *Concred) String() string {
+// String returns a string representation of the Conccred struct.
+func (c *Conccred) String() string {
 	return fmt.Sprintf("Year: %d, Quarter: %d, Brand: %d, Function: %s, CredentialedEstablishments: %d, ActiveEstablishments: %d, TransactionValue: %.2f, TransactionQuantity: %d",
 		c.Year, c.Quarter, c.Brand, c.Function, c.CredentialedEstablishments, c.ActiveEstablishments, c.TransactionValue, c.TransactionQuantity)
 }
 
-// GetConcred generates a list of Concred records based on the provided parameters.
-func GetConcred(year int32, quarter int32, creden int32, actives int32, value float32) []*Concred {
-	ret := []*Concred{}
+// GetConccred generates a list of Conccred records based on the provided parameters.
+func  (c *Conccred) GetConccred(year int32, quarter int32, creden int32, actives int32, value float32) []*Conccred {
+	ret := []*Conccred{}
 	totCreden := int32(0)
 	totActives := int32(0)
 	for bi, bv := range brandValues {
@@ -55,7 +79,7 @@ func GetConcred(year int32, quarter int32, creden int32, actives int32, value fl
 			qty := int32(valuePortion / avgTicket)
 			credentialedEstablishments := int32(float32(creden) * brandProp[bi] * funcProp[fi])
 			activeEstablishments := int32(float32(actives) * brandProp[bi] * funcProp[fi])
-			ret = append(ret, &Concred{
+			ret = append(ret, &Conccred{
 				Year:                       year,
 				Quarter:                    quarter,
 				Brand:                      bv,
@@ -75,45 +99,20 @@ func GetConcred(year int32, quarter int32, creden int32, actives int32, value fl
 	return ret
 }
 
-// LoadConcred loads a Concred record from a line of text.
-func LoadConcred() []*Concred {
-	ret := []*Concred{}
+// LoadConccred loads a Conccred record from a line of text.
+func (c *Conccred)LoadConccred() []*Conccred {
+	ret := []*Conccred{}
 	for _, y := range years {
 		for _, q := range quarters {
-			conc := GetConcred(y, q, concredTotalEstablishments, concredActiveEstablishments, concredTotalValue)
+			conc := c.GetConccred(y, q, conccredTotalEstablishments, conccredActiveEstablishments, conccredTotalValue)
 			ret = append(ret, conc...)
 		}
 	}
 	return ret
 }
 
-// PrintConcred prints the Concred records.
-func PrintConcred() {
-	estabCount := int32(0)
-	activeCount := int32(0)
-	value := float32(0)
-	qty := int32(0)
-	count := int32(0)
-	conc := LoadConcred()
-	for _, c := range conc {
-		fmt.Println(c.GetInsert())
-		estabCount += c.CredentialedEstablishments
-		activeCount += c.ActiveEstablishments
-		value += c.TransactionValue
-		qty += c.TransactionQuantity
-		count++
-	}
-	fmt.Println("--------------------------------------")
-	fmt.Printf("-- Total Credentialed Establishments: %d, expected: %d\n", estabCount, concredTotalEstablishments)
-	fmt.Printf("-- Total Active Establishments: %d, expected: %d\n", activeCount, concredActiveEstablishments)
-	fmt.Printf("-- Total Transaction Value: %.2f, expected: %.2f\n", value, concredTotalValue)
-	fmt.Printf("-- Total Transaction Quantity: %d\n", qty)
-	fmt.Printf("-- Avg ticket: %.2f expected %.2f\n", value/float32(qty), avgTicket)
-	fmt.Printf("-- Total Records: %d\n", count)
-}
-
-// ParseConcredFile parses a file containing Concred records.
-func ParseConcredFile(filename string) ([]*Concred, error) {
+// ParseConccredFile parses a file containing Conccred records.
+func (c *Conccred) ParseConccredFile(filename string) ([]*Conccred, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -132,11 +131,11 @@ func ParseConcredFile(filename string) ([]*Concred, error) {
 		return nil, fmt.Errorf("error parsing header: %w", err)
 	}
 	// read records
-	var records []*Concred
+	var records []*Conccred
 	var count int32 = 0
 	for scanner.Scan() {
 		line := scanner.Text()
-		var c Concred
+		var c Conccred
 		record, err := c.Parse(line)
 		if err != nil {
 			return nil, err
@@ -153,39 +152,28 @@ func ParseConcredFile(filename string) ([]*Concred, error) {
 	return records, nil
 }
 
-// ReconciliateConcred adjusts the first record to ensure totals match expected values.
-func ReconciliateConcred(filename string) {
-	fmt.Println("Starting concred reconciliation...")
-	getConcred := LoadConcred()
-	fileConcred, err := ParseConcredFile(filename)
-	if err != nil {
-		fmt.Printf("Error parsing concred file: %v\n", err)
-		return
+// GetLoaded retrieves and maps Conccred records from mounted data.
+func (c *Conccred) GetLoaded() (map[string]port.Report, error) {
+	loadedConccred := c.LoadConccred()
+	if loadedConccred == nil {
+		return nil, fmt.Errorf("no loaded Conccred data")
 	}
-	if len(getConcred) != len(fileConcred) {
-		fmt.Printf("Length mismatch: generated %d, file %d\n", len(getConcred), len(fileConcred))
-		return
+	mapConccred := make(map[string]port.Report)
+	for _, conc := range loadedConccred {
+		mapConccred[conc.GetKey()] = conc
 	}
-	map1 := make(map[string]*Concred)
-	map2 := make(map[string]*Concred)
-	for _, c := range getConcred {
-		key := fmt.Sprintf("%d-%d-%d-%s", c.Year, c.Quarter, c.Brand, c.Function)
-		map1[key] = c
-	}
-	for _, c := range fileConcred {
-		key := fmt.Sprintf("%d-%d-%d-%s", c.Year, c.Quarter, c.Brand, c.Function)
-		map2[key] = c
-	}
-	for k, v1 := range map1 {
-		v2, ok := map2[k]
-		if !ok {
-			fmt.Printf("Record missing in file: %s\n", k)
-			continue
-		}
-		if v1.String() != v2.String() {
-			fmt.Printf("Record mismatch for %s:\nGenerated: %s\nFile:      %s\n", k, v1.String(), v2.String())
-		}
-	}
-	fmt.Println("Reconciliation complete.")
+	return mapConccred, nil
+}
 
+// GetParsedFile retrieves and maps Conccred records from a file.
+func (c *Conccred) GetParsedFile(filename string) (map[string]port.Report, error) {
+	fileConccred, err := c.ParseConccredFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	mapConccred := make(map[string]port.Report)
+	for _, conc := range fileConccred {
+		mapConccred[conc.GetKey()] = conc
+	}
+	return mapConccred, nil
 }

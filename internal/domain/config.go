@@ -70,9 +70,9 @@ var (
 
 // concred
 var (
-	concredTotalValue           float32 = 750_234_567.21
-	concredTotalEstablishments  int32   = 7_211_563
-	concredActiveEstablishments int32   = 5_001_564
+	conccredTotalValue           float32 = 750_234_567.21
+	conccredTotalEstablishments  int32   = 7_211_563
+	conccredActiveEstablishments int32   = 5_001_564
 )
 
 // infresta

@@ -7,13 +7,10 @@ import (
 	"strconv"
 
 	"github.com/ianlopshire/go-fixedwidth"
+	"github.com/lavinas/cadoc6334/internal/port"
 )
 
-var (
-	// insert text
-	sqlRanking string = "insert into cadoc_6334_ranking(Ano, Trimestre, CodigoEstabelecimento, Funcao, Bandeira, FormaCaptura, NumeroParcelas, CodigoSegmento, ValorTransacoes, QuantidadeTransacoes, TaxaDescontoMedia) values (%d, %d, '%s', '%s', %d, %d, %d, %d, %.2f, %d, %.2f);"
-)
-
+// Ranking represents the ranking data model
 type Ranking struct {
 	Year         int32  `fixed:"1,4"`
 	Quarter      int32  `fixed:"5,5"`
@@ -30,9 +27,33 @@ type Ranking struct {
 	DiscountInt  int32 `fixed:"50,53"`
 }
 
-// GetInsert returns the SQL insert statement for the ranking
-func (r *Ranking) GetInsert() string {
-	return fmt.Sprintf(sqlRanking, r.Year, r.Quarter, r.ClientCode, r.Function, r.Brand, r.Capture, r.Installments, r.Segment, r.Value, r.Qtty, r.Discount)
+// NewRanking creates a new Ranking instance
+func NewRanking() *Ranking {
+	return &Ranking{}
+}
+
+// TableName returns the table name for the Ranking struct
+func (r *Ranking) TableName() string {
+	return "cadoc_6334_ranking"
+}
+
+// GetKey generates a unique key for the Ranking record.
+func (r *Ranking) GetKey() string {
+	return fmt.Sprintf("%d|%d|%s|%s|%d|%d|%d|%d", r.Year, r.Quarter, r.ClientCode, r.Function, r.Brand, r.Capture, r.Installments, r.Segment)
+}
+
+// FindAll retrieves all Ranking records.
+func (r *Ranking) FindAll(repo port.Repository) (map[string]port.Report, error) {
+	var records []*Ranking
+	err := repo.FindAll(&records)
+	if err != nil {
+		return nil, err
+	}
+	ret := make(map[string]port.Report)
+	for _, rec := range records {
+		ret[rec.GetKey()] = rec
+	}
+	return ret, nil
 }
 
 // ParseLine parses a line of text into a Ranking struct
@@ -53,7 +74,7 @@ func (r *Ranking) String() string {
 }
 
 // ClientRanking returns the ranking of the client
-func GetRanking(year int32, quarter int32, clientCode string, clientSegment int32, amount float32, fee float32) []*Ranking {
+func (r *Ranking) GetRanking(year int32, quarter int32, clientCode string, clientSegment int32, amount float32, fee float32) []*Ranking {
 	ret := []*Ranking{}
 	for fi, fv := range funcValues {
 		for bi, bv := range brandValues {
@@ -103,54 +124,41 @@ func GetRanking(year int32, quarter int32, clientCode string, clientSegment int3
 }
 
 // LoadRanking loads the ranking data from the file
-func LoadRanking() ([]*Ranking, error) {
+func (r *Ranking) LoadRanking() ([]*Ranking, error) {
 	rank := []*Ranking{}
 	for _, y := range years {
 		for _, q := range quarters {
 			for i := int32(1); i <= maxClients; i++ {
 				id := maxCode + i*maxCodeLeg
 				val := maxVal + float32(i)*maxValLeg
-				rank = append(rank, GetRanking(y, q, fmt.Sprintf("%08d", id), segValues[i%int32(len(segValues))], val, maxFees[i%int32(len(maxFees))])...)
+				rank = append(rank,	r.GetRanking(y, q, fmt.Sprintf("%08d", id), segValues[i%int32(len(segValues))], val, maxFees[i%int32(len(maxFees))])...)
 			}
 			for i := int32(1); i <= minClients; i++ {
 				id := minCode + i*minCodeLeg
 				val := minVal + float32(i)*minValLeg
-				rank = append(rank, GetRanking(y, q, fmt.Sprintf("%08d", id), segValues[i%int32(len(segValues))], val, minFee[i%int32(len(minFee))])...)
+				rank = append(rank, r.GetRanking(y, q, fmt.Sprintf("%08d", id), segValues[i%int32(len(segValues))], val, minFee[i%int32(len(minFee))])...)
 			}
 		}
 	}
 	return rank, nil
 }
 
-// ranking generate
-func PrintInsertRanking() {
-	rank, error := LoadRanking()
-	if error != nil {
-		fmt.Println("Error loading ranking:", error)
-		return
-	}
-	for _, r := range rank {
-		fmt.Println(r.GetInsert())
-	}
-	fmt.Printf("Total rankings generated: %d\n", len(rank))
-}
-
 // ParseRankingFile parses a file of rankings into a slice of Ranking structs
-func ParseRankingFile(filename string) (*RankingHeader, []*Ranking, error) {
+func (r *Ranking) ParseRankingFile(filename string) ([]*Ranking, error) {
 	f, err := os.Open(filename)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	defer f.Close()
 	scanner := bufio.NewScanner(f)
 	// read header
 	if !scanner.Scan() {
-		return nil, nil, fmt.Errorf("file is empty")
+		return nil, fmt.Errorf("file is empty")
 	}
 	headerLine := scanner.Text()
 	header, err := (&RankingHeader{}).Parse(headerLine)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error parsing header: %w", err)
+		return nil, fmt.Errorf("error parsing header: %w", err)
 	}
 	// read rankings
 	rankings := []*Ranking{}
@@ -159,68 +167,45 @@ func ParseRankingFile(filename string) (*RankingHeader, []*Ranking, error) {
 		line := scanner.Text()
 		ranking, err := (&Ranking{}).Parse(line)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error parsing line: %w", err)
+			return nil, fmt.Errorf("error parsing line: %w", err)
 		}
 		rankings = append(rankings, ranking)
 		count++
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if err := header.Validate("RANKING", count); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return header, rankings, nil
+	return rankings, nil
 }
 
-// Reconciliate ranking
-func ReconciliateRanking(filename string) {
-	fmt.Println("Starting ranking reconciliation...")
-	rank1, err := LoadRanking()
+// GetLoaded retrieves and maps Ranking records from mounted data.
+func (r *Ranking) GetLoaded() (map[string]port.Report, error) {
+	loadedRanking, err := r.LoadRanking()
 	if err != nil {
-		fmt.Println("Error loading ranking:", err)
-		return
+		return nil, err
 	}
-	header2, rank2, err := ParseRankingFile(filename)
+	if loadedRanking == nil {
+		return nil, fmt.Errorf("no ranking data loaded")
+	}
+	mapRanking := make(map[string]port.Report)
+	for _, i := range loadedRanking {
+		mapRanking[i.GetKey()] = i
+	}
+	return mapRanking, nil
+}
+
+// GetParsedFile retrieves and maps Ranking records from a file.
+func (r *Ranking) GetParsedFile(filename string) (map[string]port.Report, error) {
+	fileRankings, err := r.ParseRankingFile(filename)
 	if err != nil {
-		fmt.Println("Error parsing ranking file:", err)
-		return
+		return nil, err
 	}
-	if header2.Lines != int32(len(rank1)) {
-		fmt.Printf("Line count mismatch: generated %d, file %d\n", len(rank1), header2.Lines)
-	} else {
-		fmt.Printf("Line count match: %d lines\n", len(rank1))
+	mapRankings := make(map[string]port.Report)
+	for _, i := range fileRankings {
+		mapRankings[i.GetKey()] = i
 	}
-	mapRank1 := make(map[string]*Ranking)
-	for _, r := range rank1 {
-		key := fmt.Sprintf("%d|%d|%s|%s|%d|%d|%d|%d", r.Year, r.Quarter, r.ClientCode, r.Function, r.Brand, r.Capture, r.Installments, r.Segment)
-		mapRank1[key] = r
-	}
-	mapRank2 := make(map[string]*Ranking)
-	for _, r := range rank2 {
-		key := fmt.Sprintf("%d|%d|%s|%s|%d|%d|%d|%d", r.Year, r.Quarter, r.ClientCode, r.Function, r.Brand, r.Capture, r.Installments, r.Segment)
-		mapRank2[key] = r
-	}
-	if len(mapRank1) != len(mapRank2) {
-		fmt.Printf("Unique ranking count mismatch: generated %d, file %d\n", len(mapRank1), len(mapRank2))
-	} else {
-		fmt.Printf("Unique ranking count match: %d unique rankings\n", len(mapRank1))
-	}
-	// Compare rankings
-	mismatchCount := 0
-	i := 0
-	for key, r1 := range mapRank1 {
-		if r2, ok := mapRank2[key]; ok {
-			if r1.String() != r2.String() {
-				mismatchCount++
-				fmt.Printf("Mismatch at line %d:\nGenerated: %+v\nFile:      %+v\n", i+2, r1, r2)
-			}
-		}
-	}
-	if mismatchCount == 0 {
-		fmt.Println("All rankings match!")
-	} else {
-		fmt.Printf("Total mismatches: %d\n", mismatchCount)
-	}
-	fmt.Println("Reconciliation complete.")
+	return mapRankings, nil
 }

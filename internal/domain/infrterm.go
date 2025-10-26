@@ -6,12 +6,10 @@ import (
 	"os"
 
 	"github.com/ianlopshire/go-fixedwidth"
+	"github.com/lavinas/cadoc6334/internal/port"
 )
 
-var (
-	sqlInfrterm string = "insert into cadoc_6334_infrterm(Ano, Trimestre, Uf, QuantidadePOSTotal, QuantidadePOSCompartilhados, QuantidadePOSLeitoraChip, QuantidadePDV) values (%d, %d, '%s', %d, %d, %d, %d);"
-)
-
+// Infrterm represents the infrterm data model
 type Infrterm struct {
 	Year               int32  `fixed:"1,4"`
 	Quarter            int32  `fixed:"5,5"`
@@ -22,9 +20,33 @@ type Infrterm struct {
 	PDVCount           int32  `fixed:"32,39"`
 }
 
-// GetInsert returns the SQL insert statement for the infrterm
-func (r *Infrterm) GetInsert() string {
-	return fmt.Sprintf(sqlInfrterm, r.Year, r.Quarter, r.UF, r.TotalPOSCount, r.SharedPOSCount, r.ChipReaderPOSCount, r.PDVCount)
+// NewInfrterm creates a new Infrterm instance
+func NewInfrterm() *Infrterm {
+	return &Infrterm{}
+}
+
+// TableName returns the table name for the Infrterm struct
+func (r *Infrterm) TableName() string {
+	return "cadoc_6334_infrterm"
+}
+
+// GetKey generates a unique key for the Infrterm record.
+func (r *Infrterm) GetKey() string {
+	return fmt.Sprintf("%d-%d-%s", r.Year, r.Quarter, r.UF)
+}
+
+// FindAll retrieves all Infrterm records.
+func (r *Infrterm) FindAll(repo port.Repository) (map[string]port.Report, error) {
+	var records []*Infrterm
+	err := repo.FindAll(&records)
+	if err != nil {
+		return nil, err
+	}
+	ret := make(map[string]port.Report)
+	for _, rec := range records {
+		ret[rec.GetKey()] = rec
+	}
+	return ret, nil
 }
 
 // Parse parses a fixed-width string into an Infrterm struct
@@ -43,7 +65,7 @@ func (r *Infrterm) String() string {
 }
 
 // GetInfrterm returns the infrterm for a given year, quarter, state, and counts
-func GetInfrterm(year int32, quarter int32, terms int32) []*Infrterm {
+func (r *Infrterm) GetInfrterm(year int32, quarter int32, terms int32) []*Infrterm {
 	totTerms := int32(0)
 	ret := []*Infrterm{}
 	for ui, uv := range ufValues {
@@ -67,30 +89,19 @@ func GetInfrterm(year int32, quarter int32, terms int32) []*Infrterm {
 }
 
 // LoadInfrterm loads infrterm by year and quarter
-func LoadInfrTerm() []*Infrterm {
+func (r *Infrterm) LoadInfrTerm() []*Infrterm {
 	var infrterms []*Infrterm
 	for _, y := range years {
 		for _, q := range quarters {
-			infrterms = append(infrterms, GetInfrterm(y, q, infretermTerminals)...)
+			infrterms = append(infrterms, r.GetInfrterm(y, q, infretermTerminals)...)
 		}
 	}
 	return infrterms
 }
 
-// PrintInfrterm prints the infrterm details
-func PrintInfrterm() {
-	totTerms := int32(0)
-	infrterm := LoadInfrTerm()
-	for _, i := range infrterm {
-		totTerms += i.SharedPOSCount + i.ChipReaderPOSCount + i.PDVCount
-		fmt.Println(i.GetInsert())
-	}
-	fmt.Println("---------------------------------------")
-	fmt.Printf("-- total terminals: %d, expected %d\n", totTerms, infretermTerminals)
-}
 
 // LoadInfrtermFile loads infrterm data from a fixed-width file
-func LoadInfrtermFile(filename string) ([]*Infrterm, error) {
+func (i *Infrterm) LoadInfrtermFile(filename string) ([]*Infrterm, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -130,34 +141,29 @@ func LoadInfrtermFile(filename string) ([]*Infrterm, error) {
 	return r, nil
 }
 
-// ReconciliateInfrterm reconciliates the infrterm data from a file
-func ReconciliateInfrterm(filename string) {
-	fmt.Println("Starting infrterm reconciliation...")
-	fileInfrterm, err := LoadInfrtermFile(filename)
-	if err != nil {
-		fmt.Printf("Error loading infrterm file: %v\n", err)
-		return
+// GetLoaded retrieves and maps Infrterm records from mounted data.
+func (r *Infrterm) GetLoaded() (map[string]port.Report, error) {
+	loadedInfrterm := r.LoadInfrTerm()
+	if loadedInfrterm == nil {
+		return nil, fmt.Errorf("no infrterm data loaded")
 	}
-	generatedInfrterm := LoadInfrTerm()
-	map1 := make(map[string]*Infrterm)
-	map2 := make(map[string]*Infrterm)
-	for _, i := range generatedInfrterm {
-		key := fmt.Sprintf("%d-%d-%s", i.Year, i.Quarter, i.UF)
-		map1[key] = i
+	mapInfrterm := make(map[string]port.Report)
+	for _, i := range loadedInfrterm {
+		mapInfrterm[i.GetKey()] = i
 	}
-	for _, i := range fileInfrterm {
-		key := fmt.Sprintf("%d-%d-%s", i.Year, i.Quarter, i.UF)
-		map2[key] = i
-	}
-	for k, v1 := range map1 {
-		v2, ok := map2[k]
-		if !ok {
-			fmt.Printf("Key %s not found in file data\n", k)
-			continue
-		}
-		if v1.String() != v2.String() {
-			fmt.Printf("Mismatch for %s:\nGenerated: %s\nFile:      %s\n", k, v1.String(), v2.String())
-		}
-	}
-	fmt.Println("Reconciliation complete.")
+	return mapInfrterm, nil
 }
+
+// GetParsedFile retrieves and maps Infrterm records from a file.
+func (r *Infrterm) GetParsedFile(filename string) (map[string]port.Report, error) {
+	fileInfrterm, err := r.LoadInfrtermFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	mapInfrterm := make(map[string]port.Report)
+	for _, i := range fileInfrterm {
+		mapInfrterm[i.GetKey()] = i
+	}
+	return mapInfrterm, nil
+}
+

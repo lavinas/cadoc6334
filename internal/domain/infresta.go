@@ -6,10 +6,7 @@ import (
 	"os"
 
 	"github.com/ianlopshire/go-fixedwidth"
-)
-
-var (
-	infestaSQL = "insert into cadoc_6334_infresta(Ano, Trimestre, Uf, QuantidadeEstabelecimentosTotais, QuantidadeEstabelecimentosCapturaManual, QuantidadeEstabelecimentosCapturaEletronica, QuantidadeEstabelecimentosCapturaRemota) values (%d, %d, '%s', %d, %d, %d, %d);"
+	"github.com/lavinas/cadoc6334/internal/port"
 )
 
 // Infresta represents the infresta data model
@@ -23,9 +20,33 @@ type Infresta struct {
 	TotalCliRemote    int32  `fixed:"32,39"`
 }
 
-// GetInsert returns the SQL insert statement for the ranking
-func (r *Infresta) GetInsert() string {
-	return fmt.Sprintf(infestaSQL, r.Year, r.Quarter, r.UF, r.TotalCli, r.TotalCliManual, r.TotalCliEletronic, r.TotalCliRemote)
+// NewInfresta creates a new Infresta instance
+func NewInfresta() *Infresta {
+	return &Infresta{}
+}
+
+// TableName returns the table name for the Infresta struct
+func (r *Infresta) TableName() string {
+	return "cadoc_6334_infresta"
+}
+
+// GetKey generates a unique key for the Infresta record.
+func (r *Infresta) GetKey() string {
+	return fmt.Sprintf("%d-%d-%s", r.Year, r.Quarter, r.UF)
+}
+
+// FindAll retrieves all Infresta records.
+func (r *Infresta) FindAll(repo port.Repository) (map[string]port.Report, error) {
+	var records []*Infresta
+	err := repo.FindAll(&records)
+	if err != nil {
+		return nil, err
+	}
+	ret := make(map[string]port.Report)
+	for _, rec := range records {
+		ret[rec.GetKey()] = rec
+	}
+	return ret, nil
 }
 
 // Parse parses a line of text into an Infresta struct
@@ -44,7 +65,7 @@ func (r *Infresta) String() string {
 }
 
 // GetInfresta returns the infresta data for a given year and quarter
-func GetInfresta(year int32, quarter int32, totalCli int32) []*Infresta {
+func (r *Infresta) GetInfresta(year int32, quarter int32, totalCli int32) []*Infresta {
 	ret := []*Infresta{}
 	countCli := int32(0)
 	for ui, uv := range ufValues {
@@ -68,33 +89,19 @@ func GetInfresta(year int32, quarter int32, totalCli int32) []*Infresta {
 }
 
 // LoadInfresta loads infresta data by year and quarter
-func LoadInfresta() []*Infresta {
+func (r *Infresta) LoadInfresta() []*Infresta {
 	ret := []*Infresta{}
 	for _, y := range years {
 		for _, q := range quarters {
-			inf := GetInfresta(y, q, infrestaTotalEstablishments)
+			inf := r.GetInfresta(y, q, infrestaTotalEstablishments)
 			ret = append(ret, inf...)
 		}
 	}
 	return ret
 }
-
-// PrintInfresta prints the infresta data for a given year and quarter
-func PrintInfresta() {
-	totalCli := int32(0)
-	totalCli2 := int32(0)
-	infresta := LoadInfresta()
-	for _, i := range infresta {
-		fmt.Println(i.String())
-		totalCli += i.TotalCli
-		totalCli2 += i.TotalCliManual + i.TotalCliEletronic + i.TotalCliRemote
-	}
-	fmt.Println("----------------------------------------------------")
-	fmt.Printf("Total Clients: %d - Total Clients2: %d, expected %d\n", totalCli, totalCli2, infrestaTotalEstablishments)
-}
-
+	
 // LoadInfrestaFile loads infresta data from a file
-func LoadInfrestaFile(filename string) ([]*Infresta, error) {
+func (r *Infresta) LoadInfrestaFile(filename string) ([]*Infresta, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -134,38 +141,28 @@ func LoadInfrestaFile(filename string) ([]*Infresta, error) {
 	return ret, nil
 }
 
-// ReconciliateInfresta reconciliates the infresta data from a file
-func ReconciliateInfresta(filename string) {
-	fmt.Println("Starting infresta reconciliation...")
-	fileInfresta, err := LoadInfrestaFile(filename)
+// GetLoaded retrieves and maps Infresta records from mounted data.
+func (r *Infresta) GetLoaded() (map[string]port.Report, error) {
+	loadedInfresta := r.LoadInfresta()
+	if loadedInfresta == nil {
+		return nil, fmt.Errorf("no infresta data loaded")
+	}
+	mapInfresta := make(map[string]port.Report)
+	for _, i := range loadedInfresta {
+		mapInfresta[i.GetKey()] = i
+	}
+	return mapInfresta, nil
+}
+
+// GetParsedFile retrieves and maps Infresta records from a file.
+func (r *Infresta) GetParsedFile(filename string) (map[string]port.Report, error) {
+	fileInfresta, err := r.LoadInfrestaFile(filename)
 	if err != nil {
-		fmt.Printf("Error loading infresta file: %v\n", err)
-		return
+		return nil, err
 	}
-	genInfresta := LoadInfresta()
-	if len(fileInfresta) != len(genInfresta) {
-		fmt.Printf("Error: file infresta length %d does not match generated infresta length %d\n", len(fileInfresta), len(genInfresta))
-		return
-	}
-	map1 := make(map[string]*Infresta)
-	map2 := make(map[string]*Infresta)
-	for _, i := range genInfresta {
-		key := fmt.Sprintf("%d-%d-%s", i.Year, i.Quarter, i.UF)
-		map1[key] = i
-	}
+	mapInfresta := make(map[string]port.Report)
 	for _, i := range fileInfresta {
-		key := fmt.Sprintf("%d-%d-%s", i.Year, i.Quarter, i.UF)
-		map2[key] = i
+		mapInfresta[i.GetKey()] = i
 	}
-	for k, v1 := range map1 {
-		v2, ok := map2[k]
-		if !ok {
-			fmt.Printf("Missing in file: %s\n", k)
-			continue
-		}
-		if v1.String() != v2.String() {
-			fmt.Printf("Mismatch for %s:\nGenerated: %s\nFile:      %s\n", k, v1.String(), v2.String())
-		}
-	}
-	fmt.Println("Reconciliation complete.")
+	return mapInfresta, nil
 }
