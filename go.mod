@@ -4,6 +4,8 @@ go 1.25.3
 
 require (
 	github.com/ianlopshire/go-fixedwidth v0.10.0
+	github.com/shopspring/decimal v1.4.0
+	golang.org/x/text v0.21.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.0
 )
@@ -17,5 +19,4 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
 )

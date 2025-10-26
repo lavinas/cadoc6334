@@ -11,18 +11,44 @@ import (
 
 // Infrterm represents the infrterm data model
 type Infrterm struct {
-	Year               int32  `fixed:"1,4" gorm:"column:ano"`
-	Quarter            int32  `fixed:"5,5" gorm:"column:trimestre"`
+	Year               int64  `fixed:"1,4" gorm:"column:ano"`
+	Quarter            int64  `fixed:"5,5" gorm:"column:trimestre"`
 	UF                 string `fixed:"6,7" gorm:"column:uf"`
-	TotalPOSCount      int32  `fixed:"8,15" gorm:"column:quantidade_pos_totais"`
-	SharedPOSCount     int32  `fixed:"16,23" gorm:"column:quantidade_pos_compartilhados"`
-	ChipReaderPOSCount int32  `fixed:"24,31" gorm:"column:quantidade_pos_leitora_chip"`
-	PDVCount           int32  `fixed:"32,39" gorm:"column:quantidade_pdv"`
+	TotalPOSCount      int64  `fixed:"8,15" gorm:"column:quantidade_pos_totais"`
+	SharedPOSCount     int64  `fixed:"16,23" gorm:"column:quantidade_pos_compartilhados"`
+	ChipReaderPOSCount int64  `fixed:"24,31" gorm:"column:quantidade_pos_leitora_chip"`
+	PDVCount           int64  `fixed:"32,39" gorm:"column:quantidade_pdv"`
 }
 
 // NewInfrterm creates a new Infrterm instance
 func NewInfrterm() *Infrterm {
 	return &Infrterm{}
+}
+
+// Validate validates the Infrterm header information.
+func (r *Infrterm) Validate() error {
+	if r.Year <= 0 {
+		return fmt.Errorf("invalid year in header")
+	}
+	if r.Quarter <= 0 {
+		return fmt.Errorf("invalid quarter in header")
+	}
+	if r.UF <= "" {
+		return fmt.Errorf("invalid UF in header")
+	}
+	if r.TotalPOSCount < 0 {
+		return fmt.Errorf("invalid total POS count in header")
+	}
+	if r.SharedPOSCount < 0 {
+		return fmt.Errorf("invalid shared POS count in header")
+	}
+	if r.ChipReaderPOSCount < 0 {
+		return fmt.Errorf("invalid chip reader POS count in header")
+	}
+	if r.PDVCount < 0 {
+		return fmt.Errorf("invalid PDV count in header")
+	}
+	return nil
 }
 
 // TableName returns the table name for the Infrterm struct
@@ -36,7 +62,7 @@ func (r *Infrterm) GetKey() string {
 }
 
 // FindAll retrieves all Infrterm records.
-func (r *Infrterm) FindAll(repo port.Repository) (map[string]port.Report, error) {
+func (r *Infrterm) GetDB(repo port.Repository) (map[string]port.Report, error) {
 	var records []*Infrterm
 	err := repo.FindAll(&records)
 	if err != nil {
@@ -64,42 +90,6 @@ func (r *Infrterm) String() string {
 		r.Year, r.Quarter, r.UF, r.TotalPOSCount, r.SharedPOSCount, r.ChipReaderPOSCount, r.PDVCount)
 }
 
-// GetInfrterm returns the infrterm for a given year, quarter, state, and counts
-func (r *Infrterm) GetInfrterm(year int32, quarter int32, terms int32) []*Infrterm {
-	totTerms := int32(0)
-	ret := []*Infrterm{}
-	for ui, uv := range ufValues {
-		term := int32(float32(terms) * ufProp[ui])
-		inf := &Infrterm{
-			Year:               year,
-			Quarter:            quarter,
-			UF:                 uv,
-			TotalPOSCount:      term,
-			SharedPOSCount:     int32(float32(term) * infretermProp[0]),
-			ChipReaderPOSCount: int32(float32(term) * infretermProp[1]),
-			PDVCount:           int32(float32(term) * infretermProp[2]),
-		}
-		totTerms += term
-		inf.ChipReaderPOSCount = term - inf.SharedPOSCount - inf.PDVCount
-		ret = append(ret, inf)
-	}
-	dif := terms - totTerms
-	ret[0].SharedPOSCount += dif
-	return ret
-}
-
-// LoadInfrterm loads infrterm by year and quarter
-func (r *Infrterm) LoadInfrTerm() []*Infrterm {
-	var infrterms []*Infrterm
-	for _, y := range years {
-		for _, q := range quarters {
-			infrterms = append(infrterms, r.GetInfrterm(y, q, infretermTerminals)...)
-		}
-	}
-	return infrterms
-}
-
-
 // LoadInfrtermFile loads infrterm data from a fixed-width file
 func (i *Infrterm) LoadInfrtermFile(filename string) ([]*Infrterm, error) {
 	file, err := os.Open(filename)
@@ -121,7 +111,7 @@ func (i *Infrterm) LoadInfrtermFile(filename string) ([]*Infrterm, error) {
 		return nil, fmt.Errorf("error parsing header: %w", err)
 	}
 	// data lines
-	var count int32 = 0
+	var count int64 = 0
 	for scanner.Scan() {
 		line := scanner.Text()
 		inf := &Infrterm{}
@@ -141,19 +131,6 @@ func (i *Infrterm) LoadInfrtermFile(filename string) ([]*Infrterm, error) {
 	return r, nil
 }
 
-// GetLoaded retrieves and maps Infrterm records from mounted data.
-func (r *Infrterm) GetLoaded() (map[string]port.Report, error) {
-	loadedInfrterm := r.LoadInfrTerm()
-	if loadedInfrterm == nil {
-		return nil, fmt.Errorf("no infrterm data loaded")
-	}
-	mapInfrterm := make(map[string]port.Report)
-	for _, i := range loadedInfrterm {
-		mapInfrterm[i.GetKey()] = i
-	}
-	return mapInfrterm, nil
-}
-
 // GetParsedFile retrieves and maps Infrterm records from a file.
 func (r *Infrterm) GetParsedFile(filename string) (map[string]port.Report, error) {
 	fileInfrterm, err := r.LoadInfrtermFile(filename)
@@ -166,4 +143,3 @@ func (r *Infrterm) GetParsedFile(filename string) (map[string]port.Report, error
 	}
 	return mapInfrterm, nil
 }
-

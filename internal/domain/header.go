@@ -12,7 +12,7 @@ type RankingHeader struct {
 	DateStr  string `fixed:"9,16"`
 	Date     time.Time
 	Acquirer string `fixed:"17,24"`
-	Lines    int32  `fixed:"25,38"`
+	Lines    int64  `fixed:"25,38"`
 }
 
 // Parse parses a line of text into a RankingHeader struct
@@ -28,7 +28,7 @@ func (rh *RankingHeader) Parse(line string) (*RankingHeader, error) {
 	return rh, nil
 }
 
-func (rh *RankingHeader) Validate(name string, lines int32) error {
+func (rh *RankingHeader) Validate(name string, lines int64) error {
 	if rh.FileName != name {
 		return fmt.Errorf("invalid file name: expected %s, got %s", name, rh.FileName)
 	}

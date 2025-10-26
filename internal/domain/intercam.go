@@ -11,25 +11,66 @@ import (
 
 // Intercam represents the intercam data model
 type Intercam struct {
-	Year         int32  `fixed:"1,4"`
-	Quarter      int32  `fixed:"5,5"`
-	Product      int32  `fixed:"6,7"`
-	CardType     string `fixed:"8,8"`
-	Function     string `fixed:"9,9"`
-	Brand        int32  `fixed:"10,11"`
-	Capture      int32  `fixed:"12,12"`
-	Installments int32  `fixed:"13,14"`
-	Segment      int32  `fixed:"15,17"`
-	Fee          float32
-	FeeInt       int32 `fixed:"18,21"`
-	Value        float32
-	ValueInt     int32 `fixed:"22,36"`
-	Qtty         int32 `fixed:"37,48"`
+	Year         int64   `fixed:"1,4" gorm:"column:ano"`
+	Quarter      int64   `fixed:"5,5" gorm:"column:trimestre"`
+	Product      int64   `fixed:"6,7" gorm:"column:produto"`
+	CardType     string  `fixed:"8,8" gorm:"column:modalidade_cartao"`
+	Function     string  `fixed:"9,9" gorm:"column:funcao"`
+	Brand        int64   `fixed:"10,11" gorm:"column:bandeira"`
+	Capture      int64   `fixed:"12,12" gorm:"column:forma_captura"`
+	Installments int64   `fixed:"13,14" gorm:"column:numero_parcelas"`
+	Segment      int64   `fixed:"15,17" gorm:"column:codigo_segmento"`
+	Fee          float64 `gorm:"column:tarifa_intercambio"`
+	FeeInt       int64   `fixed:"18,21"`
+	Value        float64 `gorm:"column:valor_transacoes"`
+	ValueInt     int64   `fixed:"22,36"`
+	Qtty         int64   `fixed:"37,48" gorm:"column:quantidade_transacoes"`
 }
 
 // NewIntercam creates a new Intercam instance
 func NewIntercam() *Intercam {
 	return &Intercam{}
+}
+
+// Validate validates the Intercam header information.
+func (i *Intercam) Validate() error {
+	if i.Year <= 0 {
+		return fmt.Errorf("invalid year in header")
+	}
+	if i.Quarter <= 0 {
+		return fmt.Errorf("invalid quarter in header")
+	}
+	if i.Product <= 0 {
+		return fmt.Errorf("invalid product in header")
+	}
+	if i.CardType <= "" {
+		return fmt.Errorf("invalid card type in header")
+	}
+	if i.Function <= "" {
+		return fmt.Errorf("invalid function in header")
+	}
+	if i.Brand <= 0 {
+		return fmt.Errorf("invalid brand in header")
+	}
+	if i.Capture <= 0 {
+		return fmt.Errorf("invalid capture in header")
+	}
+	if i.Installments <= 0 {
+		return fmt.Errorf("invalid installments in header")
+	}
+	if i.Segment <= 0 {
+		return fmt.Errorf("invalid segment in header")
+	}
+	if i.Fee < 0 {
+		return fmt.Errorf("invalid fee in header")
+	}
+	if i.Value < 0 {
+		return fmt.Errorf("invalid value in header")
+	}
+	if i.Qtty < 0 {
+		return fmt.Errorf("invalid quantity in header")
+	}
+	return nil
 }
 
 // TableName returns the table name for the Intercam struct
@@ -43,7 +84,7 @@ func (i *Intercam) GetKey() string {
 }
 
 // FindAll retrieves all Intercam records.
-func (i *Intercam) FindAll(repo port.Repository) (map[string]port.Report, error) {
+func (i *Intercam) GetDB(repo port.Repository) (map[string]port.Report, error) {
 	var records []*Intercam
 	err := repo.FindAll(&records)
 	if err != nil {
@@ -62,9 +103,9 @@ func (i *Intercam) Parse(line string) (*Intercam, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Convert ValueInt and FeeInt back to float32
-	i.Value = float32(float64(i.ValueInt) / float64(100))
-	i.Fee = float32(float64(i.FeeInt) / float64(100))
+	// Convert ValueInt and FeeInt back to float64
+	i.Value = float64(float64(i.ValueInt) / float64(100))
+	i.Fee = float64(float64(i.FeeInt) / float64(100))
 	return i, nil
 }
 
@@ -72,75 +113,6 @@ func (i *Intercam) Parse(line string) (*Intercam, error) {
 func (i *Intercam) String() string {
 	return fmt.Sprintf("Year: %d, Quarter: %d, Product: %d, CardType: %s, Function: %s, Brand: %d, Capture: %d, Installments: %d, Segment: %d, Fee: %.2f, Value: %.2f, Qtty: %d",
 		i.Year, i.Quarter, i.Product, i.CardType, i.Function, i.Brand, i.Capture, i.Installments, i.Segment, i.Fee, i.Value, i.Qtty)
-}
-
-// GetIntercam returns the Intercam struct from the SQL insert statement
-func (i *Intercam) GetIntercam(year int32, quarter int32, value float32, fee float32) []*Intercam {
-	ret := []*Intercam{}
-	totValue := float32(0)
-	for si, sv := range segValues {
-		for pi, pv := range prodValues {
-			for ti, tv := range cardtypeValues {
-				for fi, fv := range funcValues {
-					for bi, bv := range brandValues {
-						var insValues []int32
-						var probValues []float32
-						var varFee []float32
-						for ci, cv := range captValues {
-							if fv == "D" {
-								insValues = instDebValues
-								probValues = instDebProp
-								varFee = instDebFee
-							} else {
-								insValues = instCredValues
-								probValues = instCredProp
-								varFee = instCredFee
-							}
-							for ii, iv := range insValues {
-								val := value * funcProp[fi] * brandProp[bi] * captProp[ci] * probValues[ii] * segProp[si] * prodProp[pi] * cardtypeProp[ti]
-								qty := int32(val / avgTicket)
-								if qty == 0 {
-									qty = 1
-								}
-								fee := fee + varFee[ii]
-								inter := &Intercam{
-									Year:         year,
-									Quarter:      quarter,
-									Product:      pv,
-									CardType:     tv,
-									Function:     fv,
-									Brand:        bv,
-									Capture:      cv,
-									Installments: iv,
-									Segment:      sv,
-									Fee:          fee,
-									Value:        val,
-									Qtty:         qty,
-								}
-								ret = append(ret, inter)
-								totValue += val
-
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	ret[0].Value += value - totValue
-	return ret
-}
-
-// LoadIntercam loads the intercam data
-func (i *Intercam) LoadIntercam() []*Intercam {
-	ret := []*Intercam{}
-	for _, y := range years {
-		for _, q := range quarters {
-			intercam := i.GetIntercam(y, q, intercamTotalValue, intercamAvgFee)
-			ret = append(ret, intercam...)
-		}
-	}
-	return ret
 }
 
 // ParseIntercamFile parses the intercam file and returns a slice of Intercam structs
@@ -164,7 +136,7 @@ func (i *Intercam) ParseIntercamFile(filename string) ([]*Intercam, error) {
 		return nil, fmt.Errorf("error parsing header: %w", err)
 	}
 	// read records
-	var count int32 = 0
+	var count int64 = 0
 	for scanner.Scan() {
 		line := scanner.Text()
 		intercam := &Intercam{}
@@ -184,20 +156,6 @@ func (i *Intercam) ParseIntercamFile(filename string) ([]*Intercam, error) {
 	return intercams, nil
 }
 
-// GetLoaded retrieves and maps Intercam records from mounted data.
-func (i *Intercam) GetLoaded() (map[string]port.Report, error) {
-	loadedIntercam := i.LoadIntercam()
-	if loadedIntercam == nil {
-		return nil, fmt.Errorf("no intercam data loaded")
-	}
-	mapIntercam := make(map[string]port.Report)
-	for _, ic := range loadedIntercam {
-		mapIntercam[ic.GetKey()] = ic
-	}
-	return mapIntercam, nil
-}
-
-
 // GetParsedFile retrieves and maps Intercam records from a file.
 func (i *Intercam) GetParsedFile(filename string) (map[string]port.Report, error) {
 	fileIntercam, err := i.ParseIntercamFile(filename)
@@ -210,4 +168,3 @@ func (i *Intercam) GetParsedFile(filename string) (map[string]port.Report, error
 	}
 	return mapIntercam, nil
 }
-

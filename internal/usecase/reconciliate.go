@@ -2,10 +2,9 @@ package usecase
 
 import (
 	"fmt"
-	
+
 	"github.com/lavinas/cadoc6334/internal/domain"
 	"github.com/lavinas/cadoc6334/internal/port"
-
 )
 
 const (
@@ -25,22 +24,8 @@ func NewReconciliateCase(repo port.Repository) *ReconciliateCase {
 	}
 }
 
-// Execute executes the reconciliate use case
-func (uc *ReconciliateCase) Execute() {
-	fmt.Println("--------------------------------------------------")
-	xxx := domain.NewInfrterm()
-	records, err := xxx.FindAll(uc.repo)
-	if err != nil {
-		fmt.Printf("Error retrievinrecords: %v\n", err)
-		return
-	}
-	for key, record := range records {
-		fmt.Printf("Key: %s, Record: %s\n", key, record.String())
-	}
-}
-
 // Execute2 executes the check use case
-func (uc *ReconciliateCase) Execute2() {
+func (uc *ReconciliateCase) ExecuteAll() {
 	files := []string{
 		"RANKING.TXT",
 		"CONCCRED.TXT",
@@ -49,6 +34,8 @@ func (uc *ReconciliateCase) Execute2() {
 		"DESCONTO.TXT",
 		"INTERCAM.TXT",
 		"SEGMENTO.TXT",
+		"LUCRCRED.TXT",
+		"CONTATOS.TXT",
 	}
 	reports := []port.Report{
 		domain.NewRanking(),
@@ -58,32 +45,86 @@ func (uc *ReconciliateCase) Execute2() {
 		domain.NewDiscount(),
 		domain.NewIntercam(),
 		domain.NewSegment(),
+		domain.NewLucrCred(),
+		domain.NewContact(),
 	}
 	for i, file := range files {
-		fmt.Printf("Reconciliating %s\n", file)
-		// Load the report data
-		loaded, err := reports[i].GetLoaded()
-		if err != nil {
-			fmt.Printf("Error loading report data: %v\n", err)
-			continue
-		}
-		filed, err := reports[i].GetParsedFile(fmt.Sprintf("%s/%s", path, file))
-		if err != nil {
-			fmt.Printf("Error parsing report file: %v\n", err)
-			continue
-		}
-		// Compare loaded and filed data
-		for key, loadedRecord := range loaded {
-			filedRecord, exists := filed[key]
-			if !exists {
-				fmt.Printf("Record with key %s exists in loaded data but not in file data\n", key)
-				continue
-			}
-			if loadedRecord.String() != filedRecord.String() {
-				fmt.Printf("Mismatch for key %s:\nLoaded: %s\nFiled: %s\n", key, loadedRecord.String(), filedRecord.String())
-			}
-		}
-		fmt.Println("---------------------------------------------------------------------------------------------------------")
+		uc.ExecuteReport(reports[i], file)
 	}
 }
 
+// ExecuteReport executes the check use case for a specific report
+func (uc *ReconciliateCase) ExecuteReport(report port.Report, filename string) {
+	fmt.Printf("Reconciliating %s\n", filename)
+	defer fmt.Println("---------------------------------------------------------------------------------------------------------")
+	// Get db data
+	loaded, err := report.GetDB(uc.repo)
+	if err != nil {
+		fmt.Printf("Error loading report data: %v\n", err)
+		return
+	}
+	// Get file data
+	filed, err := report.GetParsedFile(fmt.Sprintf("%s/%s", path, filename))
+	if err != nil {
+		fmt.Printf("Error parsing report file: %v\n", err)
+		return
+	}
+	// validate DB
+	if err := uc.validateReport(loaded); err != nil {
+		fmt.Println("DB validation errors found:")
+		for _, e := range err {
+			fmt.Println(e)
+		}
+		return
+	}
+	// validate File
+	if err := uc.validateReport(filed); err != nil {
+		fmt.Println("File validation errors found:")
+		for _, e := range err {
+			fmt.Println(e)
+		}
+		return
+	}
+	// Match and report discrepancies
+	errs := uc.match(loaded, filed)
+	if len(errs) > 0 {
+		fmt.Printf("Discrepancies found in %s:\n", filename)
+		for _, e := range errs {
+			fmt.Println(e)
+		}
+	} else {
+		fmt.Printf("No discrepancies found in %s\n", filename)
+	}
+}
+
+// validate validates records from both sources.
+func (uc *ReconciliateCase) validateReport(report map[string]port.Report) []error {
+	var errs []error
+	for key, dbRecord := range report {
+		if err := dbRecord.Validate(); err != nil {
+			errs = append(errs, fmt.Errorf("validation error for DB record with key %s: %v", key, err))
+		}
+	}
+	return errs
+}
+
+// match compares two maps of records and returns a slice of errors for any discrepancies found.
+func (uc *ReconciliateCase) match(db map[string]port.Report, file map[string]port.Report) []error {
+	var errs []error
+	// compare lengths
+	if len(db) != len(file) {
+		return []error{fmt.Errorf("length mismatch: DB has %d records, File has %d records", len(db), len(file))}
+	}
+
+	for key, dbRecord := range db {
+		fileRecord, exists := file[key]
+		if !exists {
+			errs = append(errs, fmt.Errorf("record with key %s exists in DB but not in file", key))
+			continue
+		}
+		if dbRecord.String() != fileRecord.String() {
+			errs = append(errs, fmt.Errorf("mismatch for key %s:\nDB: %s\nFile: %s", key, dbRecord.String(), fileRecord.String()))
+		}
+	}
+	return errs
+}

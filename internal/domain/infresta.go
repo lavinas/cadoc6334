@@ -11,18 +11,44 @@ import (
 
 // Infresta represents the infresta data model
 type Infresta struct {
-	Year              int32  `fixed:"1,4" gorm:"column:ano"`
-	Quarter           int32  `fixed:"5,5" gorm:"column:trimestre"`
+	Year              int64  `fixed:"1,4" gorm:"column:ano"`
+	Quarter           int64  `fixed:"5,5" gorm:"column:trimestre"`
 	UF                string `fixed:"6,7" gorm:"column:uf"`
-	TotalCli          int32  `fixed:"8,15" gorm:"column:quantidade_estabelecimentos_totais"`
-	TotalCliManual    int32  `fixed:"16,23" gorm:"column:quantidade_estabelecimentos_captura_manual"`
-	TotalCliEletronic int32  `fixed:"24,31" gorm:"column:quantidade_estabelecimentos_captura_eletronica"`
-	TotalCliRemote    int32  `fixed:"32,39" gorm:"column:quantidade_estabelecimentos_captura_remota"`
+	TotalCli          int64  `fixed:"8,15" gorm:"column:quantidade_estabelecimentos_totais"`
+	TotalCliManual    int64  `fixed:"16,23" gorm:"column:quantidade_estabelecimentos_captura_manual"`
+	TotalCliEletronic int64  `fixed:"24,31" gorm:"column:quantidade_estabelecimentos_captura_eletronica"`
+	TotalCliRemote    int64  `fixed:"32,39" gorm:"column:quantidade_estabelecimentos_captura_remota"`
 }
 
 // NewInfresta creates a new Infresta instance
 func NewInfresta() *Infresta {
 	return &Infresta{}
+}
+
+// Validate validates the Infresta header information.
+func (r *Infresta) Validate() error {
+	if r.Year <= 0 {
+		return fmt.Errorf("invalid year in header")
+	}
+	if r.Quarter <= 0 {
+		return fmt.Errorf("invalid quarter in header")
+	}
+	if r.UF <= "" {
+		return fmt.Errorf("invalid UF in header")
+	}
+	if r.TotalCli <= 0 {
+		return fmt.Errorf("invalid total clients in header")
+	}
+	if r.TotalCliManual < 0 {
+		return fmt.Errorf("invalid total manual clients in header")
+	}
+	if r.TotalCliEletronic < 0 {
+		return fmt.Errorf("invalid total electronic clients in header")
+	}
+	if r.TotalCliRemote < 0 {
+		return fmt.Errorf("invalid total remote clients in header")
+	}
+	return nil
 }
 
 // TableName returns the table name for the Infresta struct
@@ -36,7 +62,7 @@ func (r *Infresta) GetKey() string {
 }
 
 // FindAll retrieves all Infresta records.
-func (r *Infresta) FindAll(repo port.Repository) (map[string]port.Report, error) {
+func (r *Infresta) GetDB(repo port.Repository) (map[string]port.Report, error) {
 	var records []*Infresta
 	err := repo.FindAll(&records)
 	if err != nil {
@@ -64,42 +90,6 @@ func (r *Infresta) String() string {
 		r.Year, r.Quarter, r.UF, r.TotalCli, r.TotalCliManual, r.TotalCliEletronic, r.TotalCliRemote)
 }
 
-// GetInfresta returns the infresta data for a given year and quarter
-func (r *Infresta) GetInfresta(year int32, quarter int32, totalCli int32) []*Infresta {
-	ret := []*Infresta{}
-	countCli := int32(0)
-	for ui, uv := range ufValues {
-		cli := int32(float32(totalCli) * ufProp[ui])
-		inf := &Infresta{
-			Year:              year,
-			Quarter:           quarter,
-			UF:                uv,
-			TotalCli:          cli,
-			TotalCliManual:    int32(float32(cli) * infrestaProp[0]),
-			TotalCliEletronic: int32(float32(cli) * infrestaProp[1]),
-			TotalCliRemote:    int32(float32(cli) * infrestaProp[2]),
-		}
-		inf.TotalCliEletronic = cli - inf.TotalCliManual - inf.TotalCliRemote
-		ret = append(ret, inf)
-		countCli += cli
-	}
-	ret[1].TotalCli += totalCli - countCli
-	ret[1].TotalCliEletronic = ret[1].TotalCli - ret[1].TotalCliManual - ret[1].TotalCliRemote
-	return ret
-}
-
-// LoadInfresta loads infresta data by year and quarter
-func (r *Infresta) LoadInfresta() []*Infresta {
-	ret := []*Infresta{}
-	for _, y := range years {
-		for _, q := range quarters {
-			inf := r.GetInfresta(y, q, infrestaTotalEstablishments)
-			ret = append(ret, inf...)
-		}
-	}
-	return ret
-}
-	
 // LoadInfrestaFile loads infresta data from a file
 func (r *Infresta) LoadInfrestaFile(filename string) ([]*Infresta, error) {
 	file, err := os.Open(filename)
@@ -121,7 +111,7 @@ func (r *Infresta) LoadInfrestaFile(filename string) ([]*Infresta, error) {
 		return nil, fmt.Errorf("error parsing header: %w", err)
 	}
 	// data lines
-	var count int32 = 0
+	var count int64 = 0
 	for scanner.Scan() {
 		line := scanner.Text()
 		inf := &Infresta{}
@@ -139,19 +129,6 @@ func (r *Infresta) LoadInfrestaFile(filename string) ([]*Infresta, error) {
 		return nil, err
 	}
 	return ret, nil
-}
-
-// GetLoaded retrieves and maps Infresta records from mounted data.
-func (r *Infresta) GetLoaded() (map[string]port.Report, error) {
-	loadedInfresta := r.LoadInfresta()
-	if loadedInfresta == nil {
-		return nil, fmt.Errorf("no infresta data loaded")
-	}
-	mapInfresta := make(map[string]port.Report)
-	for _, i := range loadedInfresta {
-		mapInfresta[i.GetKey()] = i
-	}
-	return mapInfresta, nil
 }
 
 // GetParsedFile retrieves and maps Infresta records from a file.

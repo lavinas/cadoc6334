@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/lavinas/cadoc6334/internal/usecase"
 	"github.com/lavinas/cadoc6334/internal/adapter"
+	"github.com/lavinas/cadoc6334/internal/usecase"
 )
 
 // main function to run the ReconcileIntercam function
@@ -19,7 +19,5 @@ func main() {
 		panic(err)
 	}
 	defer repo.Close()
-	usecase.NewReconciliateCase(repo).Execute()
+	usecase.NewReconciliateCase(repo).ExecuteAll()
 }
-
-

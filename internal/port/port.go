@@ -2,8 +2,9 @@ package port
 
 // report domain interface
 type Report interface {
-	GetLoaded() (map[string]Report, error)
+	Validate() error
 	GetParsedFile(filename string) (map[string]Report, error)
+	GetDB(repo Repository) (map[string]Report, error)
 	String() string
 }
 

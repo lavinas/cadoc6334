@@ -11,25 +11,54 @@ import (
 
 // Conccred represents the Conccred data model.
 type Conccred struct {
-	Year                       int32  `fixed:"1,4" gorm:"column:ano"`
-	Quarter                    int32  `fixed:"5,5" gorm:"column:trimestre"`
-	Brand                      int32  `fixed:"6,7" gorm:"column:bandeira"`
-	Function                   string `fixed:"8,8" gorm:"column:funcao"`
-	CredentialedEstablishments int32  `fixed:"9,17" gorm:"column:quantidade_estabelecimentos_credenciados"`
-	ActiveEstablishments       int32  `fixed:"18,26" gorm:"column:quantidade_estabelecimentos_ativos"`
-	TransactionValue           float32 `gorm:"column:valor_transacoes"`
-	TransactionValueInt        int64 `fixed:"27,41"`
-	TransactionQuantity        int32 `fixed:"42,53" gorm:"column:quantidade_transacoes"`
-}
-
-// TableName returns the table name for the Conccred struct.
-func (c *Conccred) TableName() string {
-	return "cadoc_6334_conccred"
+	Year                       int64   `fixed:"1,4" gorm:"column:ano"`
+	Quarter                    int64   `fixed:"5,5" gorm:"column:trimestre"`
+	Brand                      int64   `fixed:"6,7" gorm:"column:bandeira"`
+	Function                   string  `fixed:"8,8" gorm:"column:funcao"`
+	CredentialedEstablishments int64   `fixed:"9,17" gorm:"column:quantidade_estabelecimentos_credenciados"`
+	ActiveEstablishments       int64   `fixed:"18,26" gorm:"column:quantidade_estabelecimentos_ativos"`
+	TransactionValue           float64 `gorm:"column:valor_transacoes"`
+	TransactionValueInt        int64   `fixed:"27,41"`
+	TransactionQuantity        int64   `fixed:"42,53" gorm:"column:quantidade_transacoes"`
 }
 
 // NewConccred creates a new Conccred instance.
 func NewConccred() *Conccred {
 	return &Conccred{}
+}
+
+// Validate validates the Conccred header information.
+func (c *Conccred) Validate() error {
+	if c.Year <= 0 {
+		return fmt.Errorf("invalid year in header")
+	}
+	if c.Quarter <= 0 {
+		return fmt.Errorf("invalid quarter in header")
+	}
+	if c.Brand <= 0 {
+		return fmt.Errorf("invalid brand in header")
+	}
+	if c.Function <= "" {
+		return fmt.Errorf("invalid function in header")
+	}
+	if c.CredentialedEstablishments <= 0 {
+		return fmt.Errorf("invalid number of credentialed establishments in header")
+	}
+	if c.ActiveEstablishments <= 0 {
+		return fmt.Errorf("invalid number of active establishments in header")
+	}
+	if c.TransactionValue <= 0 {
+		return fmt.Errorf("invalid transaction value in header")
+	}
+	if c.TransactionQuantity <= 0 {
+		return fmt.Errorf("invalid transaction quantity in header")
+	}
+	return nil
+}
+
+// TableName returns the table name for the Conccred struct.
+func (c *Conccred) TableName() string {
+	return "cadoc_6334_conccred"
 }
 
 // GetKey generates a unique key for the Conccred record.
@@ -38,7 +67,7 @@ func (c *Conccred) GetKey() string {
 }
 
 // FindAll retrieves all Conccred records.
-func (c *Conccred) FindAll(repo port.Repository) (map[string]port.Report, error) {
+func (c *Conccred) GetDB(repo port.Repository) (map[string]port.Report, error) {
 	var records []*Conccred
 	err := repo.FindAll(&records)
 	if err != nil {
@@ -57,8 +86,8 @@ func (c *Conccred) Parse(line string) (*Conccred, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Convert TransactionValueInt back to float32
-	c.TransactionValue = float32(float64(c.TransactionValueInt) / float64(100))
+	// Convert TransactionValueInt back to float64
+	c.TransactionValue = float64(float64(c.TransactionValueInt) / float64(100))
 	return c, nil
 }
 
@@ -66,49 +95,6 @@ func (c *Conccred) Parse(line string) (*Conccred, error) {
 func (c *Conccred) String() string {
 	return fmt.Sprintf("Year: %d, Quarter: %d, Brand: %d, Function: %s, CredentialedEstablishments: %d, ActiveEstablishments: %d, TransactionValue: %.2f, TransactionQuantity: %d",
 		c.Year, c.Quarter, c.Brand, c.Function, c.CredentialedEstablishments, c.ActiveEstablishments, c.TransactionValue, c.TransactionQuantity)
-}
-
-// GetConccred generates a list of Conccred records based on the provided parameters.
-func  (c *Conccred) GetConccred(year int32, quarter int32, creden int32, actives int32, value float32) []*Conccred {
-	ret := []*Conccred{}
-	totCreden := int32(0)
-	totActives := int32(0)
-	for bi, bv := range brandValues {
-		for fi, fv := range funcValues {
-			valuePortion := value * brandProp[bi] * funcProp[fi]
-			qty := int32(valuePortion / avgTicket)
-			credentialedEstablishments := int32(float32(creden) * brandProp[bi] * funcProp[fi])
-			activeEstablishments := int32(float32(actives) * brandProp[bi] * funcProp[fi])
-			ret = append(ret, &Conccred{
-				Year:                       year,
-				Quarter:                    quarter,
-				Brand:                      bv,
-				Function:                   fv,
-				CredentialedEstablishments: credentialedEstablishments,
-				ActiveEstablishments:       activeEstablishments,
-				TransactionValue:           valuePortion,
-				TransactionQuantity:        qty,
-			})
-			totCreden += credentialedEstablishments
-			totActives += activeEstablishments
-		}
-
-	}
-	ret[0].ActiveEstablishments += actives - totActives
-	ret[0].CredentialedEstablishments += creden - totCreden
-	return ret
-}
-
-// LoadConccred loads a Conccred record from a line of text.
-func (c *Conccred)LoadConccred() []*Conccred {
-	ret := []*Conccred{}
-	for _, y := range years {
-		for _, q := range quarters {
-			conc := c.GetConccred(y, q, conccredTotalEstablishments, conccredActiveEstablishments, conccredTotalValue)
-			ret = append(ret, conc...)
-		}
-	}
-	return ret
 }
 
 // ParseConccredFile parses a file containing Conccred records.
@@ -132,7 +118,7 @@ func (c *Conccred) ParseConccredFile(filename string) ([]*Conccred, error) {
 	}
 	// read records
 	var records []*Conccred
-	var count int32 = 0
+	var count int64 = 0
 	for scanner.Scan() {
 		line := scanner.Text()
 		var c Conccred
@@ -150,19 +136,6 @@ func (c *Conccred) ParseConccredFile(filename string) ([]*Conccred, error) {
 		return nil, err
 	}
 	return records, nil
-}
-
-// GetLoaded retrieves and maps Conccred records from mounted data.
-func (c *Conccred) GetLoaded() (map[string]port.Report, error) {
-	loadedConccred := c.LoadConccred()
-	if loadedConccred == nil {
-		return nil, fmt.Errorf("no loaded Conccred data")
-	}
-	mapConccred := make(map[string]port.Report)
-	for _, conc := range loadedConccred {
-		mapConccred[conc.GetKey()] = conc
-	}
-	return mapConccred, nil
 }
 
 // GetParsedFile retrieves and maps Conccred records from a file.
