@@ -11,13 +11,13 @@ import (
 
 // Infresta represents the infresta data model
 type Infresta struct {
-	Year              int32  `fixed:"1,4"`
-	Quarter           int32  `fixed:"5,5"`
-	UF                string `fixed:"6,7"`
-	TotalCli          int32  `fixed:"8,15"`
-	TotalCliManual    int32  `fixed:"16,23"`
-	TotalCliEletronic int32  `fixed:"24,31"`
-	TotalCliRemote    int32  `fixed:"32,39"`
+	Year              int32  `fixed:"1,4" gorm:"column:ano"`
+	Quarter           int32  `fixed:"5,5" gorm:"column:trimestre"`
+	UF                string `fixed:"6,7" gorm:"column:uf"`
+	TotalCli          int32  `fixed:"8,15" gorm:"column:quantidade_estabelecimentos_totais"`
+	TotalCliManual    int32  `fixed:"16,23" gorm:"column:quantidade_estabelecimentos_captura_manual"`
+	TotalCliEletronic int32  `fixed:"24,31" gorm:"column:quantidade_estabelecimentos_captura_eletronica"`
+	TotalCliRemote    int32  `fixed:"32,39" gorm:"column:quantidade_estabelecimentos_captura_remota"`
 }
 
 // NewInfresta creates a new Infresta instance

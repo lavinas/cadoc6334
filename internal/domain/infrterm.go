@@ -11,13 +11,13 @@ import (
 
 // Infrterm represents the infrterm data model
 type Infrterm struct {
-	Year               int32  `fixed:"1,4"`
-	Quarter            int32  `fixed:"5,5"`
-	UF                 string `fixed:"6,7"`
-	TotalPOSCount      int32  `fixed:"8,15"`
-	SharedPOSCount     int32  `fixed:"16,23"`
-	ChipReaderPOSCount int32  `fixed:"24,31"`
-	PDVCount           int32  `fixed:"32,39"`
+	Year               int32  `fixed:"1,4" gorm:"column:ano"`
+	Quarter            int32  `fixed:"5,5" gorm:"column:trimestre"`
+	UF                 string `fixed:"6,7" gorm:"column:uf"`
+	TotalPOSCount      int32  `fixed:"8,15" gorm:"column:quantidade_pos_totais"`
+	SharedPOSCount     int32  `fixed:"16,23" gorm:"column:quantidade_pos_compartilhados"`
+	ChipReaderPOSCount int32  `fixed:"24,31" gorm:"column:quantidade_pos_leitora_chip"`
+	PDVCount           int32  `fixed:"32,39" gorm:"column:quantidade_pdv"`
 }
 
 // NewInfrterm creates a new Infrterm instance

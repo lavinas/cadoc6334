@@ -27,28 +27,17 @@ func NewReconciliateCase(repo port.Repository) *ReconciliateCase {
 
 // Execute executes the reconciliate use case
 func (uc *ReconciliateCase) Execute() {
-	fmt.Println("Concred --------------------------------------------------")
-	concred := domain.NewConccred()
-	records, err := concred.FindAll(uc.repo)
+	fmt.Println("--------------------------------------------------")
+	xxx := domain.NewInfrterm()
+	records, err := xxx.FindAll(uc.repo)
 	if err != nil {
-		fmt.Printf("Error retrieving Concred records: %v\n", err)
-		return
-	}
-	for key, record := range records {
-		fmt.Printf("Key: %s, Record: %s\n", key, record.String())
-	}
-	fmt.Println("Discount --------------------------------------------------")
-	discount := domain.NewDiscount()
-	records, err = discount.FindAll(uc.repo)
-	if err != nil {
-		fmt.Printf("Error retrieving Discount records: %v\n", err)
+		fmt.Printf("Error retrievinrecords: %v\n", err)
 		return
 	}
 	for key, record := range records {
 		fmt.Printf("Key: %s, Record: %s\n", key, record.String())
 	}
 }
-
 
 // Execute2 executes the check use case
 func (uc *ReconciliateCase) Execute2() {
