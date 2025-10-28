@@ -5,6 +5,7 @@ import (
 
 	"github.com/lavinas/cadoc6334/internal/domain"
 	"github.com/lavinas/cadoc6334/internal/port"
+	"golang.org/x/text/encoding/charmap"
 )
 
 const (
@@ -116,6 +117,8 @@ func (uc *ReconciliateCase) match(db map[string]port.Report, file map[string]por
 	if len(db) != len(file) {
 		return []error{fmt.Errorf("length mismatch: DB has %d records, File has %d records", len(db), len(file))}
 	}
+	encoder := charmap.ISO8859_1.NewEncoder()
+
 
 	for key, dbRecord := range db {
 		fileRecord, exists := file[key]
@@ -123,8 +126,20 @@ func (uc *ReconciliateCase) match(db map[string]port.Report, file map[string]por
 			errs = append(errs, fmt.Errorf("record with key %s exists in DB but not in file", key))
 			continue
 		}
-		if dbRecord.String() != fileRecord.String() {
-			errs = append(errs, fmt.Errorf("mismatch for key %s:\nDB: %s\nFile: %s", key, dbRecord.String(), fileRecord.String()))
+		encodedDBBytes, err := encoder.Bytes([]byte(dbRecord.String()))
+		if err != nil {
+			errs = append(errs, fmt.Errorf("error encoding DB record with key %s: %v", key, err))
+			continue
+		}
+		encoderFileBytes, err := encoder.Bytes([]byte(fileRecord.String()))
+		if err != nil {
+			errs = append(errs, fmt.Errorf("error encoding File record with key %s: %v", key, err))
+			continue
+		}
+		encodedDBString := string(encodedDBBytes)
+		encodedFileString := string(encoderFileBytes)
+		if encodedDBString != encodedFileString {
+			errs = append(errs, fmt.Errorf("mismatch for key %s:\nDB: %s\nFile: %s", key, encodedDBString, encodedFileString))
 		}
 	}
 	return errs

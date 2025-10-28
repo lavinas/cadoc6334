@@ -1,57 +1,27 @@
-Reconciliating ./files/RANKING.TXT
-Discrepancies found in ./files/RANKING.TXT:
-length mismatch: DB has 7537 records, File has 16770 records
+Reconciliating ./files/in/RANKING.TXT
+No discrepancies found in ./files/in/RANKING.TXT
 ---------------------------------------------------------------------------------------------------------
-Reconciliating ./files/CONCCRED.TXT
-Discrepancies found in ./files/CONCCRED.TXT:
-mismatch for key 2025-3-8-C:
-DB: Year: 2025, Quarter: 3, Brand: 8, Function: C, CredentialedEstablishments: 17728, ActiveEstablishments: 14120, TransactionValue: 13475477.45, TransactionQuantity: 172704
-File: Year: 2025, Quarter: 3, Brand: 8, Function: C, CredentialedEstablishments: 432693, ActiveEstablishments: 300093, TransactionValue: 45014076.00, TransactionQuantity: 300093
-mismatch for key 2025-3-8-D:
-DB: Year: 2025, Quarter: 3, Brand: 8, Function: D, CredentialedEstablishments: 17728, ActiveEstablishments: 14120, TransactionValue: 45451045.46, TransactionQuantity: 945901
-File: Year: 2025, Quarter: 3, Brand: 8, Function: D, CredentialedEstablishments: 1009618, ActiveEstablishments: 700218, TransactionValue: 105032840.00, TransactionQuantity: 700218
-mismatch for key 2025-3-1-C:
-DB: Year: 2025, Quarter: 3, Brand: 1, Function: C, CredentialedEstablishments: 17728, ActiveEstablishments: 14120, TransactionValue: 73820000.29, TransactionQuantity: 905781
-File: Year: 2025, Quarter: 3, Brand: 1, Function: C, CredentialedEstablishments: 1081734, ActiveEstablishments: 750234, TransactionValue: 112535192.00, TransactionQuantity: 750234
-mismatch for key 2025-3-1-D:
-DB: Year: 2025, Quarter: 3, Brand: 1, Function: D, CredentialedEstablishments: 17728, ActiveEstablishments: 14120, TransactionValue: 115345137.03, TransactionQuantity: 2605922
-File: Year: 2025, Quarter: 3, Brand: 1, Function: D, CredentialedEstablishments: 2524047, ActiveEstablishments: 1750547, TransactionValue: 262582096.00, TransactionQuantity: 1750547
-mismatch for key 2025-3-2-C:
-DB: Year: 2025, Quarter: 3, Brand: 2, Function: C, CredentialedEstablishments: 17728, ActiveEstablishments: 14120, TransactionValue: 108777840.05, TransactionQuantity: 1612887
-File: Year: 2025, Quarter: 3, Brand: 2, Function: C, CredentialedEstablishments: 649040, ActiveEstablishments: 450140, TransactionValue: 67521120.00, TransactionQuantity: 450140
-mismatch for key 2025-3-2-D:
-DB: Year: 2025, Quarter: 3, Brand: 2, Function: D, CredentialedEstablishments: 17728, ActiveEstablishments: 14120, TransactionValue: 121204552.79, TransactionQuantity: 4005257
-File: Year: 2025, Quarter: 3, Brand: 2, Function: D, CredentialedEstablishments: 1514428, ActiveEstablishments: 1050328, TransactionValue: 157549264.00, TransactionQuantity: 1050328
+Reconciliating ./files/in/CONCCRED.TXT
+No discrepancies found in ./files/in/CONCCRED.TXT
 ---------------------------------------------------------------------------------------------------------
-Reconciliating ./files/INFRESTA.TXT
-Discrepancies found in ./files/INFRESTA.TXT:
-length mismatch: DB has 19 records, File has 27 records
+Reconciliating ./files/in/INFRESTA.TXT
+No discrepancies found in ./files/in/INFRESTA.TXT
 ---------------------------------------------------------------------------------------------------------
-Reconciliating ./files/INFRTERM.TXT
-Discrepancies found in ./files/INFRTERM.TXT:
-length mismatch: DB has 18 records, File has 27 records
+Reconciliating ./files/in/INFRTERM.TXT
+No discrepancies found in ./files/in/INFRTERM.TXT
 ---------------------------------------------------------------------------------------------------------
-Reconciliating ./files/DESCONTO.TXT
-Discrepancies found in ./files/DESCONTO.TXT:
-length mismatch: DB has 1213 records, File has 1872 records
+Reconciliating ./files/in/DESCONTO.TXT
+No discrepancies found in ./files/in/DESCONTO.TXT
 ---------------------------------------------------------------------------------------------------------
-Reconciliating ./files/INTERCAM.TXT
-Discrepancies found in ./files/INTERCAM.TXT:
-length mismatch: DB has 5452 records, File has 33696 records
+Reconciliating ./files/in/INTERCAM.TXT
+No discrepancies found in ./files/in/INTERCAM.TXT
 ---------------------------------------------------------------------------------------------------------
-Reconciliating ./files/SEGMENTO.TXT
-Discrepancies found in ./files/SEGMENTO.TXT:
-length mismatch: DB has 22 records, File has 24 records
+Reconciliating ./files/in/SEGMENTO.TXT
+No discrepancies found in ./files/in/SEGMENTO.TXT
 ---------------------------------------------------------------------------------------------------------
-Reconciliating ./files/LUCRCRED.TXT
-Discrepancies found in ./files/LUCRCRED.TXT:
-mismatch for key 20253:
-DB: Year: 2025, Quarter: 3, DiscountRevenue: 8821362.00, RentRevenue: 1243342.92, OtherRevenue: 1915730.68, InterchangeCost: 4468814.54, MarketingCost: 383722.66, BrandAccessCost: 1495029.36, RiskCost: 0.00, ProcessingCost: 447553.95, OtherCost: 5711086.36
-File: Year: 2025, Quarter: 3, DiscountRevenue: 24007506.15, RentRevenue: 2700657.12, OtherRevenue: 650876.00, InterchangeCost: 12003753.07, MarketingCost: 2768657.10, BrandAccessCost: 1676980.10, RiskCost: 650897.12, ProcessingCost: 1234500.19, OtherCost: 430212.13
+Reconciliating ./files/in/LUCRCRED.TXT
+No discrepancies found in ./files/in/LUCRCRED.TXT
 ---------------------------------------------------------------------------------------------------------
-Reconciliating ./files/CONTATOS.TXT
-File validation errors found:
-validation error for DB record with key 2025|3|D|Ana Silva: invalid position in header
-validation error for DB record with key 2025|3|T|Bruno Souza: invalid position in header
-validation error for DB record with key 2025|3|I|Carla Pereira: invalid position in header
+Reconciliating ./files/in/CONTATOS.TXT
+No discrepancies found in ./files/in/CONTATOS.TXT
 ---------------------------------------------------------------------------------------------------------

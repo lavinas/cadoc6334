@@ -7,6 +7,7 @@ import (
 
 	"github.com/ianlopshire/go-fixedwidth"
 	"github.com/lavinas/cadoc6334/internal/port"
+	"golang.org/x/text/encoding/charmap"
 )
 
 // Segment represents a segment of a path.
@@ -107,7 +108,9 @@ func (s *Segment) ParseSegmentFile(filename string) ([]*Segment, error) {
 		return nil, err
 	}
 	defer f.Close()
-	scanner := bufio.NewScanner(f)
+	decoder := charmap.ISO8859_1.NewDecoder()
+	decodedReader := decoder.Reader(f)
+	scanner := bufio.NewScanner(decodedReader)
 	// read header
 	if !scanner.Scan() {
 		return nil, fmt.Errorf("file is empty")

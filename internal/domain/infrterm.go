@@ -7,6 +7,7 @@ import (
 
 	"github.com/ianlopshire/go-fixedwidth"
 	"github.com/lavinas/cadoc6334/internal/port"
+	"golang.org/x/text/encoding/charmap"
 )
 
 // Infrterm represents the infrterm data model
@@ -117,7 +118,9 @@ func (i *Infrterm) LoadInfrtermFile(filename string) ([]*Infrterm, error) {
 	defer file.Close()
 
 	var r []*Infrterm
-	scanner := bufio.NewScanner(file)
+	decoder := charmap.ISO8859_1.NewDecoder()
+	decodedReader := decoder.Reader(file)
+	scanner := bufio.NewScanner(decodedReader)
 	// header line
 	if !scanner.Scan() {
 		return nil, fmt.Errorf("file is empty")

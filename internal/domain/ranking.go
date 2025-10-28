@@ -7,6 +7,7 @@ import (
 
 	"github.com/ianlopshire/go-fixedwidth"
 	"github.com/lavinas/cadoc6334/internal/port"
+	"golang.org/x/text/encoding/charmap"
 )
 
 // Ranking represents the ranking data model
@@ -48,11 +49,11 @@ func (r *Ranking) Format() string {
 	ret += fmt.Sprintf("%02d", r.Installments)
 	ret += fmt.Sprintf("%03d", r.Segment)
 	// Convert Value to int representation
-	r.ValueInt = int64(r.Value * 100)
+	r.ValueInt = int64(r.Value*100 + 0.5)
 	ret += fmt.Sprintf("%015d", r.ValueInt)
 	ret += fmt.Sprintf("%012d", r.Qtty)
 	// Convert Discount to int representation
-	r.DiscountInt = int64(r.Discount * 100)
+	r.DiscountInt = int64(r.Discount*100 + 0.5)
 	ret += fmt.Sprintf("%04d", r.DiscountInt)
 	return ret
 }
@@ -143,7 +144,9 @@ func (r *Ranking) ParseRankingFile(filename string) ([]*Ranking, error) {
 		return nil, err
 	}
 	defer f.Close()
-	scanner := bufio.NewScanner(f)
+	decoder := charmap.ISO8859_1.NewDecoder()
+	decodedReader := decoder.Reader(f)
+	scanner := bufio.NewScanner(decodedReader)
 	// read header
 	if !scanner.Scan() {
 		return nil, fmt.Errorf("file is empty")

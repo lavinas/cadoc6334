@@ -7,6 +7,7 @@ import (
 
 	"github.com/ianlopshire/go-fixedwidth"
 	"github.com/lavinas/cadoc6334/internal/port"
+	"golang.org/x/text/encoding/charmap"
 )
 
 type LucrCred struct {
@@ -48,15 +49,15 @@ func (l *LucrCred) Format() string {
 	ret += fmt.Sprintf("%04d", l.Year)
 	ret += fmt.Sprintf("%01d", l.Quarter)
 	// Convert float64 fields to int representation
-	l.DiscountRevenueInt = int64(l.DiscountRevenue * 100)
-	l.RentRevenueInt = int64(l.RentRevenue * 100)
-	l.OtherRevenueInt = int64(l.OtherRevenue * 100)
-	l.InterchangeCostInt = int64(l.InterchangeCost * 100)
-	l.MarketingCostInt = int64(l.MarketingCost * 100)
-	l.BrandAccessCostInt = int64(l.BrandAccessCost * 100)
-	l.RiskCostInt = int64(l.RiskCost * 100)
-	l.ProcessingCostInt = int64(l.ProcessingCost * 100)
-	l.OtherCostInt = int64(l.OtherCost * 100)
+	l.DiscountRevenueInt = int64(l.DiscountRevenue*100 + 0.5)
+	l.RentRevenueInt = int64(l.RentRevenue*100 + 0.5)
+	l.OtherRevenueInt = int64(l.OtherRevenue*100 + 0.5)
+	l.InterchangeCostInt = int64(l.InterchangeCost*100 + 0.5)
+	l.MarketingCostInt = int64(l.MarketingCost*100 + 0.5)
+	l.BrandAccessCostInt = int64(l.BrandAccessCost*100 + 0.5)
+	l.RiskCostInt = int64(l.RiskCost*100 + 0.5)
+	l.ProcessingCostInt = int64(l.ProcessingCost*100 + 0.5)
+	l.OtherCostInt = int64(l.OtherCost*100 + 0.5)
 	ret += fmt.Sprintf("%012d", l.DiscountRevenueInt)
 	ret += fmt.Sprintf("%012d", l.RentRevenueInt)
 	ret += fmt.Sprintf("%012d", l.OtherRevenueInt)
@@ -164,7 +165,9 @@ func (l *LucrCred) ParseLucrCredFile(filePath string) ([]*LucrCred, error) {
 	defer file.Close()
 
 	var records []*LucrCred
-	scanner := bufio.NewScanner(file)
+	decoder := charmap.ISO8859_1.NewDecoder()
+	decodedReader := decoder.Reader(file)
+	scanner := bufio.NewScanner(decodedReader)
 	// Read and parse header
 	if !scanner.Scan() {
 		return nil, fmt.Errorf("file is empty")

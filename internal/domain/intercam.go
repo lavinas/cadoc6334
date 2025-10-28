@@ -7,6 +7,7 @@ import (
 
 	"github.com/ianlopshire/go-fixedwidth"
 	"github.com/lavinas/cadoc6334/internal/port"
+	"golang.org/x/text/encoding/charmap"
 )
 
 // Intercam represents the intercam data model
@@ -50,10 +51,10 @@ func (i *Intercam) Format() string {
 	ret += fmt.Sprintf("%02d", i.Installments)
 	ret += fmt.Sprintf("%03d", i.Segment)
 	// Convert Fee to int representation
-	i.FeeInt = int64(i.Fee * 100)
+	i.FeeInt = int64(i.Fee*100 + 0.5)
 	ret += fmt.Sprintf("%04d", i.FeeInt)
 	// Convert Value to int representation
-	i.ValueInt = int64(i.Value * 100)
+	i.ValueInt = int64(i.Value*100 + 0.5)
 	ret += fmt.Sprintf("%015d", i.ValueInt)
 	ret += fmt.Sprintf("%012d", i.Qtty)
 	return ret
@@ -151,7 +152,9 @@ func (i *Intercam) ParseIntercamFile(filename string) ([]*Intercam, error) {
 	defer file.Close()
 
 	var intercams []*Intercam
-	scanner := bufio.NewScanner(file)
+	decoder := charmap.ISO8859_1.NewDecoder()
+	decodedReader := decoder.Reader(file)
+	scanner := bufio.NewScanner(decodedReader)
 	// read header
 	if !scanner.Scan() {
 		return nil, fmt.Errorf("file is empty")

@@ -7,6 +7,7 @@ import (
 
 	"github.com/ianlopshire/go-fixedwidth"
 	"github.com/lavinas/cadoc6334/internal/port"
+	"golang.org/x/text/encoding/charmap"
 )
 
 // Discount SQL insert statement
@@ -52,16 +53,16 @@ func (d *Discount) Format() string {
 	ret += fmt.Sprintf("%02d", d.Installments)
 	ret += fmt.Sprintf("%03d", d.Segment)
 	// Convert AvgFee, MinFee, MaxFee, StdDevFee to int representation
-	d.AvgFeeInt = int64(d.AvgFee * 100)
-	d.MinFeeInt = int64(d.MinFee * 100)
-	d.MaxFeeInt = int64(d.MaxFee * 100)
-	d.StdDevFeeInt = int64(d.StdDevFee * 100)
+	d.AvgFeeInt = int64(d.AvgFee*100 + 0.5)
+	d.MinFeeInt = int64(d.MinFee*100 + 0.5)
+	d.MaxFeeInt = int64(d.MaxFee*100 + 0.5)
+	d.StdDevFeeInt = int64(d.StdDevFee*100 + 0.5)
 	ret += fmt.Sprintf("%04d", d.AvgFeeInt)
 	ret += fmt.Sprintf("%04d", d.MinFeeInt)
 	ret += fmt.Sprintf("%04d", d.MaxFeeInt)
 	ret += fmt.Sprintf("%04d", d.StdDevFeeInt)
 	// Convert Value to int representation
-	d.ValueInt = int64(d.Value * 100)
+	d.ValueInt = int64(d.Value*100 + 0.5)
 	ret += fmt.Sprintf("%015d", d.ValueInt)
 	ret += fmt.Sprintf("%012d", d.Qtty)
 	return ret
@@ -164,7 +165,9 @@ func (r *Discount) ParseDiscountFile(filePath string) ([]*Discount, error) {
 	}
 	defer f.Close()
 	discounts := []*Discount{}
-	scanner := bufio.NewScanner(f)
+	decoder := charmap.ISO8859_1.NewDecoder()
+	decodedReader := decoder.Reader(f)
+	scanner := bufio.NewScanner(decodedReader)
 	// read header
 	if !scanner.Scan() {
 		return nil, fmt.Errorf("file is empty")

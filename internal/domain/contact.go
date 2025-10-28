@@ -7,6 +7,7 @@ import (
 
 	"github.com/ianlopshire/go-fixedwidth"
 	"github.com/lavinas/cadoc6334/internal/port"
+	"golang.org/x/text/encoding/charmap"
 )
 
 // Contact represents the Contact data model.
@@ -113,7 +114,10 @@ func (c *Contact) ParseContactFile(filePath string) ([]*Contact, error) {
 	}
 	defer file.Close()
 	var contacts []*Contact
-	scanner := bufio.NewScanner(file)
+	decoder := charmap.ISO8859_1.NewDecoder()
+	decodedReader := decoder.Reader(file)
+
+	scanner := bufio.NewScanner(decodedReader)
 	// read header
 	if !scanner.Scan() {
 		return nil, fmt.Errorf("file is empty")

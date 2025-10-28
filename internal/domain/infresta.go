@@ -7,6 +7,7 @@ import (
 
 	"github.com/ianlopshire/go-fixedwidth"
 	"github.com/lavinas/cadoc6334/internal/port"
+	"golang.org/x/text/encoding/charmap"
 )
 
 // Infresta represents the infresta data model
@@ -117,7 +118,9 @@ func (r *Infresta) LoadInfrestaFile(filename string) ([]*Infresta, error) {
 	defer file.Close()
 
 	ret := []*Infresta{}
-	scanner := bufio.NewScanner(file)
+	decoder := charmap.ISO8859_1.NewDecoder()
+	decodedReader := decoder.Reader(file)
+	scanner := bufio.NewScanner(decodedReader)
 	// header line
 	if !scanner.Scan() {
 		return nil, fmt.Errorf("file is empty")

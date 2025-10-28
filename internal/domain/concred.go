@@ -7,6 +7,7 @@ import (
 
 	"github.com/ianlopshire/go-fixedwidth"
 	"github.com/lavinas/cadoc6334/internal/port"
+	"golang.org/x/text/encoding/charmap"
 )
 
 // Conccred represents the Conccred data model.
@@ -42,7 +43,7 @@ func (c *Conccred) Format() string {
 	ret += fmt.Sprintf("%09d", c.CredentialedEstablishments)
 	ret += fmt.Sprintf("%09d", c.ActiveEstablishments)
 	// Convert TransactionValue to int representation
-	c.TransactionValueInt = int64(c.TransactionValue * 100)
+	c.TransactionValueInt = int64(c.TransactionValue*100 + 0.5)
 	ret += fmt.Sprintf("%015d", c.TransactionValueInt)
 	ret += fmt.Sprintf("%012d", c.TransactionQuantity)
 	return ret
@@ -125,8 +126,9 @@ func (c *Conccred) ParseConccredFile(filename string) ([]*Conccred, error) {
 		return nil, err
 	}
 	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
+	decoder := charmap.ISO8859_1.NewDecoder()
+	decodedReader := decoder.Reader(file)
+	scanner := bufio.NewScanner(decodedReader)
 	// read header
 	if !scanner.Scan() {
 		return nil, fmt.Errorf("file is empty")
