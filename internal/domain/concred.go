@@ -27,6 +27,27 @@ func NewConccred() *Conccred {
 	return &Conccred{}
 }
 
+// GetName gets name of the report
+func (c *Conccred) GetName() string {
+	return "CONCCRED"
+}
+
+// MarshalFixedWidth marshals the Conccred struct into a fixed-width format.
+func (c *Conccred) Format() string {
+	ret := ""
+	ret += fmt.Sprintf("%04d", c.Year)
+	ret += fmt.Sprintf("%01d", c.Quarter)
+	ret += fmt.Sprintf("%02d", c.Brand)
+	ret += fmt.Sprintf("%01s", c.Function)
+	ret += fmt.Sprintf("%09d", c.CredentialedEstablishments)
+	ret += fmt.Sprintf("%09d", c.ActiveEstablishments)
+	// Convert TransactionValue to int representation
+	c.TransactionValueInt = int64(c.TransactionValue * 100)
+	ret += fmt.Sprintf("%015d", c.TransactionValueInt)
+	ret += fmt.Sprintf("%012d", c.TransactionQuantity)
+	return ret
+}
+
 // Validate validates the Conccred header information.
 func (c *Conccred) Validate() error {
 	if c.Year <= 0 {

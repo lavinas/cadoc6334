@@ -31,6 +31,32 @@ func NewRanking() *Ranking {
 	return &Ranking{}
 }
 
+// GetName gets name of the report
+func (r *Ranking) GetName() string {
+	return "RANKING"
+}
+
+// Format marshals the Ranking struct into a fixed-width format.
+func (r *Ranking) Format() string {
+	ret := ""
+	ret += fmt.Sprintf("%04d", r.Year)
+	ret += fmt.Sprintf("%01d", r.Quarter)
+	ret += fmt.Sprintf("%-8s", r.ClientCode)
+	ret += fmt.Sprintf("%01s", r.Function)
+	ret += fmt.Sprintf("%02d", r.Brand)
+	ret += fmt.Sprintf("%01d", r.Capture)
+	ret += fmt.Sprintf("%02d", r.Installments)
+	ret += fmt.Sprintf("%03d", r.Segment)
+	// Convert Value to int representation
+	r.ValueInt = int64(r.Value * 100)
+	ret += fmt.Sprintf("%015d", r.ValueInt)
+	ret += fmt.Sprintf("%012d", r.Qtty)
+	// Convert Discount to int representation
+	r.DiscountInt = int64(r.Discount * 100)
+	ret += fmt.Sprintf("%04d", r.DiscountInt)
+	return ret
+}
+
 // Validate validates the Ranking header information.
 func (r *Ranking) Validate() error {
 	if r.Year <= 0 {

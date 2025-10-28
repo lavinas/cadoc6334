@@ -25,6 +25,24 @@ func NewContact() *Contact {
 	return &Contact{}
 }
 
+// GetName gets name of the report
+func (c *Contact) GetName() string {
+	return "CONTATOS"
+}
+
+// Format marshals the Contact struct into a fixed-width format.
+func (c *Contact) Format() string {
+	ret := ""
+	ret += fmt.Sprintf("%04d", c.Year)
+	ret += fmt.Sprintf("%01d", c.Quarter)
+	ret += fmt.Sprintf("%01s", c.ContactType)
+	ret += fmt.Sprintf("%-50s", c.Name)
+	ret += fmt.Sprintf("%-50s", c.Position)
+	ret += fmt.Sprintf("%-50s", c.Phone)
+	ret += fmt.Sprintf("%-50s", c.Email)
+	return ret
+}
+
 // Validate validates the Contact header information.
 func (c *Contact) Validate() error {
 	if c.Year <= 0 {

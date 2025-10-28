@@ -15,6 +15,26 @@ type RankingHeader struct {
 	Lines    int64  `fixed:"25,38"`
 }
 
+// GetNewRankingHeader creates a new RankingHeader instance.
+func NewHeader (filename string, lines int64) *RankingHeader {
+	return &RankingHeader{
+		FileName: filename,
+		DateStr:  time.Now().Format("20060102"),
+		Acquirer: "47377613",
+		Lines:    lines,
+	}
+}
+
+// Format marshals the RankingHeader struct into a fixed-width format.
+func (rh *RankingHeader) Format() string {
+	ret := ""
+	ret += fmt.Sprintf("%-8s", rh.FileName)
+	ret += fmt.Sprintf("%-8s", rh.DateStr)
+	ret += fmt.Sprintf("%-8s", rh.Acquirer)
+	ret += fmt.Sprintf("%08d", rh.Lines)
+	return ret
+}
+
 // Parse parses a line of text into a RankingHeader struct
 func (rh *RankingHeader) Parse(line string) (*RankingHeader, error) {
 	err := fixedwidth.Unmarshal([]byte(line), rh)

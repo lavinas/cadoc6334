@@ -32,6 +32,33 @@ func NewIntercam() *Intercam {
 	return &Intercam{}
 }
 
+// GetName gets name of the report
+func (i *Intercam) GetName() string {
+	return "INTERCAM"
+}
+
+// Format marshals the Intercam struct into a fixed-width format.
+func (i *Intercam) Format() string {
+	ret := ""
+	ret += fmt.Sprintf("%04d", i.Year)
+	ret += fmt.Sprintf("%01d", i.Quarter)
+	ret += fmt.Sprintf("%02d", i.Product)
+	ret += fmt.Sprintf("%01s", i.CardType)
+	ret += fmt.Sprintf("%01s", i.Function)
+	ret += fmt.Sprintf("%02d", i.Brand)
+	ret += fmt.Sprintf("%01d", i.Capture)
+	ret += fmt.Sprintf("%02d", i.Installments)
+	ret += fmt.Sprintf("%03d", i.Segment)
+	// Convert Fee to int representation
+	i.FeeInt = int64(i.Fee * 100)
+	ret += fmt.Sprintf("%04d", i.FeeInt)
+	// Convert Value to int representation
+	i.ValueInt = int64(i.Value * 100)
+	ret += fmt.Sprintf("%015d", i.ValueInt)
+	ret += fmt.Sprintf("%012d", i.Qtty)
+	return ret
+}
+
 // Validate validates the Intercam header information.
 func (i *Intercam) Validate() error {
 	if i.Year <= 0 {

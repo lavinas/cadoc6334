@@ -25,6 +25,24 @@ func NewInfresta() *Infresta {
 	return &Infresta{}
 }
 
+// GetName gets name of the report
+func (r *Infresta) GetName() string {
+	return "INFRESTA"
+}
+
+// Format marshals the Infresta struct into a fixed-width format.
+func (r *Infresta) Format() string {
+	ret := ""
+	ret += fmt.Sprintf("%04d", r.Year)
+	ret += fmt.Sprintf("%01d", r.Quarter)
+	ret += fmt.Sprintf("%-2s", r.UF)
+	ret += fmt.Sprintf("%08d", r.TotalCli)
+	ret += fmt.Sprintf("%08d", r.TotalCliManual)
+	ret += fmt.Sprintf("%08d", r.TotalCliEletronic)
+	ret += fmt.Sprintf("%08d", r.TotalCliRemote)
+	return ret
+}
+
 // Validate validates the Infresta header information.
 func (r *Infresta) Validate() error {
 	if r.Year <= 0 {

@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	path = "./files"
+	inPath = "./files/in"
 )
 
 // ReconciliateCase represents the use case for checking or validating data
@@ -49,7 +49,8 @@ func (uc *ReconciliateCase) ExecuteAll() {
 		domain.NewContact(),
 	}
 	for i, file := range files {
-		uc.ExecuteReport(reports[i], file)
+		filename := fmt.Sprintf("%s/%s", inPath, file)
+		uc.ExecuteReport(reports[i], filename)
 	}
 }
 
@@ -64,7 +65,7 @@ func (uc *ReconciliateCase) ExecuteReport(report port.Report, filename string) {
 		return
 	}
 	// Get file data
-	filed, err := report.GetParsedFile(fmt.Sprintf("%s/%s", path, filename))
+	filed, err := report.GetParsedFile(filename)
 	if err != nil {
 		fmt.Printf("Error parsing report file: %v\n", err)
 		return

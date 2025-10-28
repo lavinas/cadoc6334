@@ -36,6 +36,37 @@ func NewDiscount() *Discount {
 	return &Discount{}
 }
 
+// GetName gets name of the report
+func (d *Discount) GetName() string {
+	return "DESCONTO"
+}
+
+// Format marshals the Discount struct into a fixed-width format.
+func (d *Discount) Format() string {
+	ret := ""
+	ret += fmt.Sprintf("%04d", d.Year)
+	ret += fmt.Sprintf("%01d", d.Quarter)
+	ret += fmt.Sprintf("%01s", d.Function)
+	ret += fmt.Sprintf("%02d", d.Brand)
+	ret += fmt.Sprintf("%01d", d.Capture)
+	ret += fmt.Sprintf("%02d", d.Installments)
+	ret += fmt.Sprintf("%03d", d.Segment)
+	// Convert AvgFee, MinFee, MaxFee, StdDevFee to int representation
+	d.AvgFeeInt = int64(d.AvgFee * 100)
+	d.MinFeeInt = int64(d.MinFee * 100)
+	d.MaxFeeInt = int64(d.MaxFee * 100)
+	d.StdDevFeeInt = int64(d.StdDevFee * 100)
+	ret += fmt.Sprintf("%04d", d.AvgFeeInt)
+	ret += fmt.Sprintf("%04d", d.MinFeeInt)
+	ret += fmt.Sprintf("%04d", d.MaxFeeInt)
+	ret += fmt.Sprintf("%04d", d.StdDevFeeInt)
+	// Convert Value to int representation
+	d.ValueInt = int64(d.Value * 100)
+	ret += fmt.Sprintf("%015d", d.ValueInt)
+	ret += fmt.Sprintf("%012d", d.Qtty)
+	return ret
+}
+
 // Validate validates the Discount header information.
 func (d *Discount) Validate() error {
 	if d.Year <= 0 {

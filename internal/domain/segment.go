@@ -22,6 +22,20 @@ func NewSegment() *Segment {
 	return &Segment{}
 }
 
+// GetName gets name of the report
+func (s *Segment) GetName() string {
+	return "SEGMENTO"
+}
+
+// Format marshals the Segment struct into a fixed-width format.
+func (s *Segment) Format() string {
+	ret := ""
+	ret += fmt.Sprintf("%-50s", s.Name)
+	ret += fmt.Sprintf("%-250s", s.Description)
+	ret += fmt.Sprintf("%03d", s.Code)
+	return ret
+}
+
 // Validate validates the Segment information.
 func (s *Segment) Validate() error {
 	if s.Name == "" {

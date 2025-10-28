@@ -6,6 +6,8 @@ type Report interface {
 	GetParsedFile(filename string) (map[string]Report, error)
 	GetDB(repo Repository) (map[string]Report, error)
 	String() string
+	Format() string
+	GetName() string
 }
 
 // repository domain interface

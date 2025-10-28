@@ -37,6 +37,38 @@ func NewLucrCred() *LucrCred {
 	return &LucrCred{}
 }
 
+// GetName gets name of the report
+func (l *LucrCred) GetName() string {
+	return "LUCRCRED"
+}
+
+// Format marshals the LucrCred struct into a fixed-width format.
+func (l *LucrCred) Format() string {
+	ret := ""
+	ret += fmt.Sprintf("%04d", l.Year)
+	ret += fmt.Sprintf("%01d", l.Quarter)
+	// Convert float64 fields to int representation
+	l.DiscountRevenueInt = int64(l.DiscountRevenue * 100)
+	l.RentRevenueInt = int64(l.RentRevenue * 100)
+	l.OtherRevenueInt = int64(l.OtherRevenue * 100)
+	l.InterchangeCostInt = int64(l.InterchangeCost * 100)
+	l.MarketingCostInt = int64(l.MarketingCost * 100)
+	l.BrandAccessCostInt = int64(l.BrandAccessCost * 100)
+	l.RiskCostInt = int64(l.RiskCost * 100)
+	l.ProcessingCostInt = int64(l.ProcessingCost * 100)
+	l.OtherCostInt = int64(l.OtherCost * 100)
+	ret += fmt.Sprintf("%012d", l.DiscountRevenueInt)
+	ret += fmt.Sprintf("%012d", l.RentRevenueInt)
+	ret += fmt.Sprintf("%012d", l.OtherRevenueInt)
+	ret += fmt.Sprintf("%012d", l.InterchangeCostInt)
+	ret += fmt.Sprintf("%012d", l.MarketingCostInt)
+	ret += fmt.Sprintf("%012d", l.BrandAccessCostInt)
+	ret += fmt.Sprintf("%012d", l.RiskCostInt)
+	ret += fmt.Sprintf("%012d", l.ProcessingCostInt)
+	ret += fmt.Sprintf("%012d", l.OtherCostInt)
+	return ret
+}
+
 // Validate validates the LucrCred information.
 func (l *LucrCred) Validate() error {
 	if l.Year <= 0 {

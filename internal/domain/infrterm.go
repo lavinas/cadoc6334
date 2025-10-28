@@ -25,6 +25,24 @@ func NewInfrterm() *Infrterm {
 	return &Infrterm{}
 }
 
+// GetName gets name of the report
+func (r *Infrterm) GetName() string {
+	return "INFRTERM"
+}
+
+// Format marshals the Infrterm struct into a fixed-width format.
+func (r *Infrterm) Format() string {
+	ret := ""
+	ret += fmt.Sprintf("%04d", r.Year)
+	ret += fmt.Sprintf("%01d", r.Quarter)
+	ret += fmt.Sprintf("%-2s", r.UF)
+	ret += fmt.Sprintf("%08d", r.TotalPOSCount)
+	ret += fmt.Sprintf("%08d", r.SharedPOSCount)
+	ret += fmt.Sprintf("%08d", r.ChipReaderPOSCount)
+	ret += fmt.Sprintf("%08d", r.PDVCount)
+	return ret
+}
+
 // Validate validates the Infrterm header information.
 func (r *Infrterm) Validate() error {
 	if r.Year <= 0 {
