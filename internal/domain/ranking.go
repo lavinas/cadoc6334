@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/ianlopshire/go-fixedwidth"
 	"github.com/lavinas/cadoc6334/internal/port"
@@ -115,6 +116,9 @@ func (r *Ranking) GetDB(repo port.Repository) (map[string]port.Report, error) {
 	}
 	ret := make(map[string]port.Report)
 	for _, rec := range records {
+		if cc, err := strconv.Atoi(rec.ClientCode); err == nil {
+			rec.ClientCode = fmt.Sprintf("%08d", cc)
+		}
 		ret[rec.GetKey()] = rec
 	}
 	return ret, nil

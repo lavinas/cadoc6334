@@ -1,27 +1,27 @@
-Reconciliating ./files/in/RANKING.TXT
-No discrepancies found in ./files/in/RANKING.TXT
+Reconciliating ./files/in/RANKING.TXT.TXT
+No discrepancies found in ./files/in/RANKING.TXT.TXT
 ---------------------------------------------------------------------------------------------------------
-Reconciliating ./files/in/CONCCRED.TXT
-No discrepancies found in ./files/in/CONCCRED.TXT
+Reconciliating ./files/in/CONCCRED.TXT.TXT
+No discrepancies found in ./files/in/CONCCRED.TXT.TXT
 ---------------------------------------------------------------------------------------------------------
-Reconciliating ./files/in/INFRESTA.TXT
-No discrepancies found in ./files/in/INFRESTA.TXT
+Reconciliating ./files/in/INFRESTA.TXT.TXT
+No discrepancies found in ./files/in/INFRESTA.TXT.TXT
 ---------------------------------------------------------------------------------------------------------
-Reconciliating ./files/in/INFRTERM.TXT
-No discrepancies found in ./files/in/INFRTERM.TXT
+Reconciliating ./files/in/INFRTERM.TXT.TXT
+No discrepancies found in ./files/in/INFRTERM.TXT.TXT
 ---------------------------------------------------------------------------------------------------------
-Reconciliating ./files/in/DESCONTO.TXT
-No discrepancies found in ./files/in/DESCONTO.TXT
+Reconciliating ./files/in/DESCONTO.TXT.TXT
+No discrepancies found in ./files/in/DESCONTO.TXT.TXT
 ---------------------------------------------------------------------------------------------------------
-Reconciliating ./files/in/INTERCAM.TXT
-No discrepancies found in ./files/in/INTERCAM.TXT
+Reconciliating ./files/in/INTERCAM.TXT.TXT
+No discrepancies found in ./files/in/INTERCAM.TXT.TXT
 ---------------------------------------------------------------------------------------------------------
-Reconciliating ./files/in/SEGMENTO.TXT
-No discrepancies found in ./files/in/SEGMENTO.TXT
+Reconciliating ./files/in/SEGMENTO.TXT.TXT
+No discrepancies found in ./files/in/SEGMENTO.TXT.TXT
 ---------------------------------------------------------------------------------------------------------
-Reconciliating ./files/in/LUCRCRED.TXT
-No discrepancies found in ./files/in/LUCRCRED.TXT
+Reconciliating ./files/in/LUCRCRED.TXT.TXT
+No discrepancies found in ./files/in/LUCRCRED.TXT.TXT
 ---------------------------------------------------------------------------------------------------------
-Reconciliating ./files/in/CONTATOS.TXT
-No discrepancies found in ./files/in/CONTATOS.TXT
+Reconciliating ./files/in/CONTATOS.TXT.TXT
+No discrepancies found in ./files/in/CONTATOS.TXT.TXT
 ---------------------------------------------------------------------------------------------------------

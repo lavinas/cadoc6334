@@ -123,7 +123,7 @@ func (uc *ReconciliateCase) match(db map[string]port.Report, file map[string]por
 	for key, dbRecord := range db {
 		fileRecord, exists := file[key]
 		if !exists {
-			errs = append(errs, fmt.Errorf("record with key %s exists in DB but not in file", key))
+			errs = append(errs, fmt.Errorf("db record with key %s exists in DB but not in file", key))
 			continue
 		}
 		encodedDBBytes, err := encoder.Bytes([]byte(dbRecord.String()))
@@ -142,5 +142,30 @@ func (uc *ReconciliateCase) match(db map[string]port.Report, file map[string]por
 			errs = append(errs, fmt.Errorf("mismatch for key %s:\nDB: %s\nFile: %s", key, encodedDBString, encodedFileString))
 		}
 	}
+
+	for key, fileRecord := range file {
+		dbRecord, exists := db[key]
+		if !exists {
+			errs = append(errs, fmt.Errorf("filerecord with key %s exists in File but not in DB", key))
+			continue
+		}
+		encodedDBBytes, err := encoder.Bytes([]byte(dbRecord.String()))
+		if err != nil {
+			errs = append(errs, fmt.Errorf("error encoding DB record with key %s: %v", key, err))
+			continue
+		}
+		encoderFileBytes, err := encoder.Bytes([]byte(fileRecord.String()))
+		if err != nil {
+			errs = append(errs, fmt.Errorf("error encoding File record with key %s: %v", key, err))
+			continue
+		}
+		encodedDBString := string(encodedDBBytes)
+		encodedFileString := string(encoderFileBytes)
+		if encodedDBString != encodedFileString {
+			errs = append(errs, fmt.Errorf("mismatch for key %s:\nDB: %s\nFile: %s", key, encodedDBString, encodedFileString))
+		}
+	}
+
+
 	return errs
 }
