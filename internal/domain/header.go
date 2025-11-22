@@ -16,7 +16,7 @@ type RankingHeader struct {
 }
 
 // GetNewRankingHeader creates a new RankingHeader instance.
-func NewHeader (filename string, lines int64) *RankingHeader {
+func NewHeader(filename string, lines int64) *RankingHeader {
 	return &RankingHeader{
 		FileName: filename,
 		DateStr:  time.Now().Format("20060102"),

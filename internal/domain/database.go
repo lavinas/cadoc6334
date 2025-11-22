@@ -1,8 +1,8 @@
 package domain
 
 import (
-	"time"
 	"fmt"
+	"time"
 
 	"github.com/lavinas/cadoc6334/internal/port"
 )
@@ -13,7 +13,6 @@ type Database struct {
 	DateStr  string `fixed:"9,16"`
 	Acquirer string `fixed:"17,24"`
 	BaseDate string `fixed:"25,38"`
-
 }
 
 // NewDatabase creates a new Database instance

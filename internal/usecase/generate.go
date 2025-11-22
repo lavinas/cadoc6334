@@ -2,25 +2,22 @@ package usecase
 
 import (
 	"fmt"
-	"sort"
 	"os"
-	
-	"golang.org/x/text/encoding/charmap"
+	"sort"
+
 	"github.com/lavinas/cadoc6334/internal/domain"
 	"github.com/lavinas/cadoc6334/internal/port"
-
+	"golang.org/x/text/encoding/charmap"
 )
 
 const (
 	outPath = "./files/out"
 )
 
-
 // GenerateCase represents the use case for generating data
 type GenerateCase struct {
 	repo port.Repository
 }
-
 
 // NewGenerateCase creates a new instance of GenerateCase
 func NewGenerateCase(repo port.Repository) *GenerateCase {
@@ -141,4 +138,3 @@ func (ge *GenerateCase) GenerateReport(report port.Report, filename string) {
 		file.Write([]byte("\n"))
 	}
 }
-	

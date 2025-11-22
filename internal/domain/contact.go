@@ -52,14 +52,8 @@ func (c *Contact) Validate() error {
 	if c.Quarter <= 0 {
 		return fmt.Errorf("invalid quarter in header")
 	}
-	if c.Name == "" {
-		return fmt.Errorf("invalid name in header")
-	}
-	if c.Position == "" {
-		return fmt.Errorf("invalid position in header")
-	}
-	if c.Phone == "" {
-		return fmt.Errorf("invalid phone in header")
+	if c.ContactType == "" {
+		return fmt.Errorf("invalid contact type in header")
 	}
 	if c.Email == "" {
 		return fmt.Errorf("invalid email in header")

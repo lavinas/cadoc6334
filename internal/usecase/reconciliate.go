@@ -119,7 +119,6 @@ func (uc *ReconciliateCase) match(db map[string]port.Report, file map[string]por
 	}
 	encoder := charmap.ISO8859_1.NewEncoder()
 
-
 	for key, dbRecord := range db {
 		fileRecord, exists := file[key]
 		if !exists {
@@ -165,7 +164,6 @@ func (uc *ReconciliateCase) match(db map[string]port.Report, file map[string]por
 			errs = append(errs, fmt.Errorf("mismatch for key %s:\nDB: %s\nFile: %s", key, encodedDBString, encodedFileString))
 		}
 	}
-
 
 	return errs
 }
