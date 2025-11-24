@@ -24,8 +24,22 @@ func NewGenerateCase(repo port.Repository) *GenerateCase {
 	return &GenerateCase{repo: repo}
 }
 
-// Execute executes the generate use case
+// Execute all tst
 func (ge *GenerateCase) ExecuteAll() {
+	files := []string{
+		"PIX.TXT",
+	}
+	reports := []port.Report{
+		domain.NewPix(),
+	}
+	for i, file := range files {
+		filename := fmt.Sprintf("%s/%s", outPath, file)
+		ge.GenerateReport(reports[i], filename)
+	}
+}
+
+// Execute executes the generate use case
+func (ge *GenerateCase) ExecuteAll2() {
 	// Implement the logic for generating data here
 
 	files := []string{
@@ -59,6 +73,40 @@ func (ge *GenerateCase) ExecuteAll() {
 			continue
 		}
 		ge.GenerateReport(reports[i], filename)
+	}
+}
+
+// GeneratePixReport generates the PIX report
+func (ge *GenerateCase) GeneratePixReport(filename string) {
+	// Implement the logic for generating data here
+	fmt.Printf("Generating data for %s\n", filename)
+	defer fmt.Println("---------------------------------------------------------------------------------------------------------")
+	// read db data
+	pix := domain.NewPix()
+	lines, err := pix.GetDB(ge.repo)
+	if err != nil {
+		fmt.Printf("Error getting data from DB: %s\n", err)
+		return
+	}
+	// sort lines
+	order := make([]string, 0, len(lines))
+	for k := range lines {
+		order = append(order, k)
+	}
+	sort.Strings(order)
+	// open file for writing
+	file, err := os.Create(filename)
+	if err != nil {
+		fmt.Printf("Error creating file: %s\n", err)
+		return
+	}
+	defer file.Close()
+	// print lines
+	for _, k := range order {
+		r := lines[k].Format()
+		// Convert to desired encoding
+		file.Write([]byte(r))
+		file.Write([]byte("\n"))
 	}
 }
 
