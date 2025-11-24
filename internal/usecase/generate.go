@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"time"
 
 	"github.com/lavinas/cadoc6334/internal/domain"
 	"github.com/lavinas/cadoc6334/internal/port"
@@ -29,12 +30,9 @@ func (ge *GenerateCase) ExecuteAll() {
 	files := []string{
 		"PIX.TXT",
 	}
-	reports := []port.Report{
-		domain.NewPix(),
-	}
-	for i, file := range files {
+	for _, file := range files {
 		filename := fmt.Sprintf("%s/%s", outPath, file)
-		ge.GenerateReport(reports[i], filename)
+		ge.GeneratePixReport(filename)
 	}
 }
 
@@ -101,6 +99,11 @@ func (ge *GenerateCase) GeneratePixReport(filename string) {
 		return
 	}
 	defer file.Close()
+	// Print header
+	header := domain.NewPixHeader(time.Now())
+	headerLine := header.Format()
+	file.Write([]byte(headerLine))
+	file.Write([]byte("\n"))
 	// print lines
 	for _, k := range order {
 		r := lines[k].Format()
@@ -108,6 +111,11 @@ func (ge *GenerateCase) GeneratePixReport(filename string) {
 		file.Write([]byte(r))
 		file.Write([]byte("\n"))
 	}
+	// Print trailer
+	trailer := domain.NewPixTrailer(int64(len(lines)))
+	trailerLine := trailer.Format()
+	file.Write([]byte(trailerLine))
+	file.Write([]byte("\n"))
 }
 
 // GenerateDatabaseReport generates the database report

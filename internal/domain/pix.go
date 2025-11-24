@@ -30,7 +30,7 @@ type Pix struct {
 	NumeroECFPADQ      string          `fixed:"131,145" gorm:"column:numero_ec_fp_adq"`
 	ArranjoPagamentoFP string          `fixed:"146,148" gorm:"column:empty_field"`
 	CodigoFormaEntrada string          `fixed:"149,150" gorm:"column:forma_entrada"`
-	Hora               time.Time       `fixed:"151,158" gorm:"column:hora_transacao"`
+	Hora               time.Time       `fixed:"151,158" gorm:"column:hora_transacao;type:time"`
 }
 
 // NewPix creates a new Pix instance
@@ -56,13 +56,15 @@ func (p *Pix) Format() string {
 	ret += fmt.Sprintf("%-1s", p.TipoParcelamento)
 	ret += fmt.Sprintf("%-1s", p.TipoTransacao)
 	ret += fmt.Sprintf("%-2s", p.PlanoPagamento)
-	ret += fmt.Sprintf("%017s", p.ValorBrutoOriginal.StringFixed(2))
+	vbint := p.ValorBrutoOriginal.Mul(decimal.NewFromInt(100)).IntPart()
+	ret += fmt.Sprintf("%017d", vbint)
 	ret += fmt.Sprintf("%05s", p.TaxaMDROriginal)
-	ret += fmt.Sprintf("%017s", p.ValorMDROriginal.StringFixed(2))
+	vmdr := p.ValorMDROriginal.Mul(decimal.NewFromInt(100)).IntPart()
+	ret += fmt.Sprintf("%017d", vmdr)
 	ret += fmt.Sprintf("%-2s", p.TipoTecnologia)
 	ret += fmt.Sprintf("%-8s", p.NumeroTerminal)
-	ret += fmt.Sprintf("%-6s", p.CodigoAutorizacao)
-	ret += fmt.Sprintf("%-20s", p.NSU)
+	ret += fmt.Sprintf("%-6s", p.CodigoAutorizacao[:6])
+	ret += fmt.Sprintf("%-20s", p.NSU[:20])
 	ret += fmt.Sprintf("%-15s", p.NumeroECFPADQ)
 	ret += fmt.Sprintf("%-3s", p.ArranjoPagamentoFP)
 	ret += fmt.Sprintf("%-2s", p.CodigoFormaEntrada)
@@ -94,7 +96,7 @@ func (p *Pix) GetKey() string {
 // GetDB returns the database connection.
 func (p *Pix) GetDB(repo port.Repository) (map[string]port.Report, error) {
 	var records []*Pix
-	err := repo.FindAll(&records)
+	err := repo.FindAll(&records, 100, 0)
 	if err != nil {
 		return nil, err
 	}

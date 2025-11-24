@@ -125,7 +125,7 @@ func (d *Discount) GetKey() string {
 // FindAll retrieves all Discount records.
 func (d *Discount) GetDB(repo port.Repository) (map[string]port.Report, error) {
 	var records []*Discount
-	err := repo.FindAll(&records)
+	err := repo.FindAll(&records, 0, 0)
 	if err != nil {
 		return nil, err
 	}

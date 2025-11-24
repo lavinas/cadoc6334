@@ -91,7 +91,7 @@ func (c *Conccred) GetKey() string {
 // FindAll retrieves all Conccred records.
 func (c *Conccred) GetDB(repo port.Repository) (map[string]port.Report, error) {
 	var records []*Conccred
-	err := repo.FindAll(&records)
+	err := repo.FindAll(&records, 0, 0)
 	if err != nil {
 		return nil, err
 	}

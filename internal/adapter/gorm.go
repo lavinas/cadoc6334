@@ -41,11 +41,20 @@ func NewPostgresGormAdapter(config PostgresConfig) (*GormAdapter, error) {
 	return &GormAdapter{db: db}, nil
 }
 
-// FindAll retrieves all records that match the given conditions into dest
-func (g *GormAdapter) FindAll(dest interface{}, conditions ...interface{}) error {
-	return g.db.Find(dest, conditions...).Error
+// FindAll retrieves all records that match the given conditions into dest with optional limit and offset
+// limit and offset can be set to 0 for no limit/offset
+func (g *GormAdapter) FindAll(dest interface{}, limit int, offset int, conditions ...interface{}) error {
+	query := g.db
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+	return query.Find(dest, conditions...).Error
 }
 
+// Close closes the database connection
 func (g *GormAdapter) Close() error {
 	sqlDB, err := g.db.DB()
 	if err != nil {

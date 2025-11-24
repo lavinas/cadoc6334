@@ -110,7 +110,7 @@ func (r *Ranking) GetKey() string {
 // FindAll retrieves all Ranking records.
 func (r *Ranking) GetDB(repo port.Repository) (map[string]port.Report, error) {
 	var records []*Ranking
-	err := repo.FindAll(&records)
+	err := repo.FindAll(&records, 0, 0)
 	if err != nil {
 		return nil, err
 	}
