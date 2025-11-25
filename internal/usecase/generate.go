@@ -118,6 +118,64 @@ func (ge *GenerateCase) GeneratePixReport(filename string) {
 	file.Write([]byte("\n"))
 }
 
+// GeneratePixReport2 generates the PIX report
+func (ge *GenerateCase) GeneratePixReport2(filename string) {
+	fmt.Printf("Generating data for %s\n", filename)
+	defer fmt.Println("---------------------------------------------------------------------------------------------------------")
+	// read db data
+	pix := domain.NewPix()
+	lines, err := pix.GetDB(ge.repo)
+	if err != nil {
+		fmt.Printf("Error getting data from DB: %s\n", err)
+		return
+	}
+	// sort lines
+	order := make([]string, 0, len(lines))
+	for k := range lines {
+		order = append(order, k)
+	}
+	sort.Strings(order)
+	// control var
+	var last_date = time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC)
+	var file *os.File
+	var count int64 = 0
+	// loop
+	for _, k := range order {
+		if lines[k].(*domain.Pix).DataTransacao.After(last_date) {
+			if file != nil {
+				// Print trailer
+				trailer := domain.NewPixTrailer(count)
+				trailerLine := trailer.Format()
+				file.Write([]byte(trailerLine))
+				file.Write([]byte("\n"))
+				file.Close()
+			}
+			// close previous file
+			file.Close()
+			// reset count
+			count = 0
+			// update date
+			last_date = lines[k].(*domain.Pix).DataTransacao
+			// create new file
+			file, err = os.Create(fmt.Sprintf("%s/PIX_%s.TXT", outPath, lines[k].(*domain.Pix).DataTransacao.Format("20060102")))
+			if err != nil {
+				fmt.Printf("Error creating file: %s\n", err)
+				return
+			}
+			// Print header
+			header := domain.NewPixHeader(lines[k].(*domain.Pix).DataTransacao)
+			headerLine := header.Format()
+			file.Write([]byte(headerLine))
+			file.Write([]byte("\n"))
+		}
+		// print lines
+		r := lines[k].Format()
+		// Convert to desired encoding
+		file.Write([]byte(r))
+		file.Write([]byte("\n"))
+	}	
+}
+
 // GenerateDatabaseReport generates the database report
 func (ge *GenerateCase) GenerateDatabaseReport(filename string) {
 	// Implement the logic for generating data here

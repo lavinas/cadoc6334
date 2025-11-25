@@ -1,20 +1,20 @@
 package domain
 
 import (
-	"time"
 	"fmt"
+	"time"
 )
 
 // PixHeader represents the header record for the PIX report
 type PixHeader struct {
-	RecordType     string    `fixed:"1,1"`
-	DataTransacao time.Time  `fixed:"2,11"`
+	RecordType    string    `fixed:"1,1"`
+	DataTransacao time.Time `fixed:"2,11"`
 }
 
 // NewPixHeader creates a new PixHeader instance
 func NewPixHeader(date time.Time) *PixHeader {
 	return &PixHeader{
-		RecordType:     "H",
+		RecordType:    "H",
 		DataTransacao: date,
 	}
 }

@@ -31,6 +31,7 @@ type Pix struct {
 	ArranjoPagamentoFP string          `fixed:"146,148" gorm:"column:empty_field"`
 	CodigoFormaEntrada string          `fixed:"149,150" gorm:"column:forma_entrada"`
 	Hora               time.Time       `fixed:"151,158" gorm:"column:hora_transacao;type:time"`
+	Duplicated         bool            `gorm:"column:duplicated"`
 }
 
 // NewPix creates a new Pix instance
@@ -90,7 +91,7 @@ func (p *Pix) TableName() string {
 
 // GetKey returns the unique key for the Pix record.
 func (p *Pix) GetKey() string {
-	return fmt.Sprintf("%s|%s|%s", p.CodigoCliente, p.DataMovimento.Format("2006-01-02"), p.NSU)
+	return fmt.Sprintf("%s|%s", p.DataTransacao.Format("2006-01-02"), p.NSU)
 }
 
 // GetDB returns the database connection.
