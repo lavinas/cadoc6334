@@ -57,6 +57,11 @@ func (g *GormAdapter) FindAll(dest interface{}, limit int, offset int, orderBy s
 	return query.Find(dest, conditions...).Error
 }
 
+// FindByPrimaryKey retrieves a record by its primary key into dest
+func (g *GormAdapter) FindByPrimaryKey(dest interface{}, keyName string, keyValue interface{}) error {
+	return g.db.First(dest, fmt.Sprintf("%s = ?", keyName), keyValue).Error
+}
+
 // Close closes the database connection
 func (g *GormAdapter) Close() error {
 	sqlDB, err := g.db.DB()

@@ -135,7 +135,7 @@ func (ge *GenerateCase) GeneratePixReport(filename string) {
 	var file *os.File
 	var count int64 = 0
 	// loop
-	for _,k := range lines {
+	for _, k := range lines {
 		if k.(*domain.Pix).DataTransacao.After(last_date) {
 			if file != nil {
 				// Print trailer
@@ -170,7 +170,7 @@ func (ge *GenerateCase) GeneratePixReport(filename string) {
 		// Convert to desired encoding
 		file.Write([]byte(r))
 		file.Write([]byte("\n"))
-		count+=1
+		count += 1
 	}
 	if file != nil {
 		// Print trailer

@@ -9,6 +9,7 @@ import (
 	"github.com/lavinas/cadoc6334/internal/port"
 )
 
+// Pix represents the PIX record structure.
 type Pix struct {
 	RecordType         string          `fixed:"1,1" gorm:"column:recordtype"`
 	CodigoCliente      string          `fixed:"2,16" gorm:"column:codigocliente"`
@@ -25,8 +26,8 @@ type Pix struct {
 	ValorMDROriginal   decimal.Decimal `fixed:"78,94" gorm:"column:valor_mdr"`
 	TipoTecnologia     string          `fixed:"95,96" gorm:"column:tipo_tecnologia"`
 	NumeroTerminal     string          `fixed:"97,104" gorm:"column:terminal_id"`
-	CodigoAutorizacao  string          `fixed:"105,110" gorm:"column:cd_autorizacao_ext"`
-	NSU                string          `fixed:"111,130" gorm:"column:nsu"`
+	CodigoAutorizacao  string          `fixed:"105,110" gorm:"column:auth_target"`
+	NSU                string          `fixed:"111,130" gorm:"column:nsu_target"`
 	NumeroECFPADQ      string          `fixed:"131,145" gorm:"column:numero_ec_fp_adq"`
 	ArranjoPagamentoFP string          `fixed:"146,148" gorm:"column:empty_field"`
 	CodigoFormaEntrada string          `fixed:"149,150" gorm:"column:forma_entrada"`
@@ -101,9 +102,11 @@ func (p *Pix) GetDB(repo port.Repository) (map[string]port.Report, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	result := make(map[string]port.Report)
 	for _, record := range records {
+		if record.Duplicated {
+			continue
+		}
 		result[record.GetKey()] = record
 	}
 	return result, nil
@@ -118,6 +121,9 @@ func (p *Pix) GetDBOrdered(repo port.Repository) ([]port.Report, error) {
 	}
 	var result []port.Report
 	for _, record := range records {
+		if record.Duplicated {
+			continue
+		}
 		result = append(result, record)
 	}
 	return result, nil
