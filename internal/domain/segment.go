@@ -64,7 +64,7 @@ func (s *Segment) GetKey() string {
 // FindAll retrieves all Segment records.
 func (s *Segment) GetDB(repo port.Repository) (map[string]port.Report, error) {
 	var records []*Segment
-	err := repo.FindAll(&records, 0, 0)
+	err := repo.FindAll(&records, 0, 0, "")
 	if err != nil {
 		return nil, err
 	}

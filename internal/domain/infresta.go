@@ -83,7 +83,7 @@ func (r *Infresta) GetKey() string {
 // FindAll retrieves all Infresta records.
 func (r *Infresta) GetDB(repo port.Repository) (map[string]port.Report, error) {
 	var records []*Infresta
-	err := repo.FindAll(&records, 0, 0)
+	err := repo.FindAll(&records, 0, 0, "")
 	if err != nil {
 		return nil, err
 	}

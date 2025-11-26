@@ -114,7 +114,7 @@ func (i *Intercam) GetKey() string {
 // FindAll retrieves all Intercam records.
 func (i *Intercam) GetDB(repo port.Repository) (map[string]port.Report, error) {
 	var records []*Intercam
-	err := repo.FindAll(&records, 0, 0)
+	err := repo.FindAll(&records, 0, 0, "")
 	if err != nil {
 		return nil, err
 	}

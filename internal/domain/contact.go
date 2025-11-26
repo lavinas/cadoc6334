@@ -74,7 +74,7 @@ func (c *Contact) GetKey() string {
 // GetDB returns the database connection.
 func (c *Contact) GetDB(repo port.Repository) (map[string]port.Report, error) {
 	var records []*Contact
-	err := repo.FindAll(&records, 0, 0)
+	err := repo.FindAll(&records, 0, 0, "")
 	if err != nil {
 		return nil, err
 	}

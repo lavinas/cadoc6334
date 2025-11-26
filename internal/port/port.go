@@ -12,5 +12,5 @@ type Report interface {
 
 // repository domain interface
 type Repository interface {
-	FindAll(dest interface{}, limit int, offset int, conditions ...interface{}) error
+	FindAll(dest interface{}, limit int, offset int, orderBy string, conditions ...interface{}) error
 }

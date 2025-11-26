@@ -43,13 +43,16 @@ func NewPostgresGormAdapter(config PostgresConfig) (*GormAdapter, error) {
 
 // FindAll retrieves all records that match the given conditions into dest with optional limit and offset
 // limit and offset can be set to 0 for no limit/offset
-func (g *GormAdapter) FindAll(dest interface{}, limit int, offset int, conditions ...interface{}) error {
+func (g *GormAdapter) FindAll(dest interface{}, limit int, offset int, orderBy string, conditions ...interface{}) error {
 	query := g.db
 	if limit > 0 {
 		query = query.Limit(limit)
 	}
 	if offset > 0 {
 		query = query.Offset(offset)
+	}
+	if orderBy != "" {
+		query = query.Order(orderBy)
 	}
 	return query.Find(dest, conditions...).Error
 }

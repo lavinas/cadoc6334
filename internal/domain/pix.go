@@ -97,7 +97,7 @@ func (p *Pix) GetKey() string {
 // GetDB returns the database connection.
 func (p *Pix) GetDB(repo port.Repository) (map[string]port.Report, error) {
 	var records []*Pix
-	err := repo.FindAll(&records, 100, 0)
+	err := repo.FindAll(&records, 0, 0, "datatransacao")
 	if err != nil {
 		return nil, err
 	}
@@ -105,6 +105,20 @@ func (p *Pix) GetDB(repo port.Repository) (map[string]port.Report, error) {
 	result := make(map[string]port.Report)
 	for _, record := range records {
 		result[record.GetKey()] = record
+	}
+	return result, nil
+}
+
+// GetDB returns the database connection.
+func (p *Pix) GetDBOrdered(repo port.Repository) ([]port.Report, error) {
+	var records []*Pix
+	err := repo.FindAll(&records, 0, 0, "datatransacao")
+	if err != nil {
+		return nil, err
+	}
+	var result []port.Report
+	for _, record := range records {
+		result = append(result, record)
 	}
 	return result, nil
 }
