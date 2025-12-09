@@ -152,7 +152,7 @@ func (ge *GenerateCase) GeneratePixReport(filename string) {
 			// update date
 			last_date = k.(*domain.Pix).DataTransacao
 			// create new file
-			filename := fmt.Sprintf("%s/PIX_%s.TXT", outPath, k.(*domain.Pix).DataTransacao.Format("20060102"))
+			filename := fmt.Sprintf("%s/bh_transacoes_%s.txt", outPath, k.(*domain.Pix).DataTransacao.Format("2006-01-02"))
 			file, err = os.Create(filename)
 			fmt.Printf("[%s]Creating file: %s\n", time.Now().Format("2006-01-02 15:04:05"), filename)
 			if err != nil {
