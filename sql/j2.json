@@ -1,0 +1,40 @@
+{
+    "current_page": 1,
+    "page_size": 100,
+    "total_items": 1,
+    "items": [
+    {
+        "process_id": 100,
+        "process_name": "clientes_brutos",
+        "status_id": 3,
+        "status_name": "completed",
+        "last_period_start": "2023-01-01T00:00:00",
+        "last_period_end": "2023-01-31T23:59:59",
+        "last_processing_start": "2023-02-01T00:00:00",
+        "last_processing_end": "2023-02-01T01:00:00",
+        "last_total": 1000,
+        "last_quantity": 950,
+        "last_execution_status_id": 3,
+        "last_execution_trace_id": "600eb20cc6ef72605bfd349c169928f0",
+        "last_execution_status_name": "completed",
+        "last_error_message": null
+    },
+    {
+        "process_id": 101,
+        "process_name": "vendas_mensais",
+        "user_id": "user_67890",
+        "status_id": 2,
+        "status_name": "processing",
+        "last_period_start": "2023-02-01T00:00:00",
+        "last_period_end": "2023-02-28T23:59:59",
+        "last_processing_start": "2023-03-01T00:00:00",
+        "last_processing_end": null,
+        "last_total": 2000,
+        "last_quantity": 1500,
+        "last_execution_status_id": 2,
+        "last_execution_trace_id": "700eb20cc6ef72605bfd349c169928f1",
+        "last_execution_status_name": "processing",
+        "last_error_message": null
+    }
+    ]
+}
